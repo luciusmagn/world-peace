@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+
+sbcl --non-interactive \
+  --eval '(require :asdf)' \
+  --eval '(asdf:load-asd (merge-pathnames "world-peace.asd" (uiop:getcwd)))' \
+  --eval '(asdf:load-system :world-peace)'
