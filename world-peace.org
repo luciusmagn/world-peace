@@ -610,3 +610,156 @@ end {
     0
 }
 #+END_SRC
+
+* Grammar
+These are the basic tokens. We separate into the following groups:
+- Keyword-like: fixed position, do not play part in expressions
+- Operators
+- Dynamic: identifiers and numeric literals
+
+#+BEGIN_SRC lelwel :tangle src/peace.llw
+token Dec='dec'
+      Ret='ret'
+      Do='do'
+      By='by'
+      Case='case'
+      Num='num'
+      Load='load'
+      If='if'
+      Else='else'
+      Until='-->'
+      PatternArrow='<-'
+      Spacer='---';
+
+token LPar='(' RPar=')' Comma=',' Colon=':' LBrace='{' RBrace='}' Period='.'
+      Semi=';' Asn='=' Plus='+' Minus='-' Star='*' Slash='/' Not='!'
+      Caret='^' LAng='<' RAng='>' And='&' Percent='%' Pipe='|' LBracket='{'
+      RBracket='}' DoubleDot='..'
+      ;
+
+token Name='<name>' Integer='<integer>' Url='<url>';
+
+token Whitespace;
+
+#+END_SRC
+
+Despite its looks, World Peace is actually whitespace-insensitive:
+
+#+BEGIN_SRC lelwel :tangle src/peace.llw
+skip Whitespace;
+
+start file;
+
+
+#+END_SRC
+
+A source file is composed of zero or more items. An item is:
+- Load statement for module imports
+- Global variable
+- Function definition
+
+#+BEGIN_SRC lelwel :tangle src/peace.llw
+
+file: item*;
+
+item:
+     load_stmt
+   | variable
+   | function
+   ;
+
+#+END_SRC
+
+A load statement is followed by either a Name, or a URL:
+
+#+BEGIN_SRC lelwel :tangle src/peace.llw
+load_stmt:
+     load_local
+   | load_url
+   ;
+
+load_local:
+     'load' Name
+   ;
+
+load_url:
+     'load' Url
+   ;
+#+END_SRC
+
+A variable is the =num= keyword followed by a Name, an equals sign, and an expression,
+finally being terminated by a semicolon.
+
+In function bodies, lines start with spacers, so a num may be prepended with it.
+
+#+BEGIN_SRC lelwel :tangle src/peace.llw
+maybe_spacer:
+     [ '---' ]
+     ;
+
+variable:
+     maybe_spacer 'num' Name '=' expr ';'
+     ;
+#+END_SRC
+
+A function declaration consists of the =dec= keyword, a Name, argument list, a colon,
+function body and the =end= clause:
+
+#+BEGIN_SRC lelwel :tangle src/peace.llw
+function:
+     'dec' Name param_list '(' body end_expr
+     ;
+
+param_list:
+     '(' [param (?1 ',' param)* [',']] ')'
+     ;
+
+param:
+     'num' Name
+     ;
+
+body:
+    ( '---' [ statement ] )*
+    ;
+
+end_expr:
+    'end' (
+         '{' end_body '}'
+    )
+    ;
+
+end_body:
+      pattern_match
+    | expr
+    ;
+#+END_SRC
+
+Naturally, since we got here, we need to tackle pattern matching:
+
+#+BEGIN_SRC lelwel :tangle src/peace.llw
+pattern_match:
+    match_arm match_arm*
+    ;
+
+match_arm:
+    name '<-' pattern ':' match_body ','
+    ;
+
+pattern:
+      range
+    | Integer
+    | '!'* Name
+    ;
+
+range:
+    [ Integer | Name ] '..' [Integer | Name ]
+    ;
+#+END_SRC
+
+Statements are still not that problematic:
+- Variable declarations
+- Do loops
+- Ifs
+- Cases
+- Assignments
+- Function calls
