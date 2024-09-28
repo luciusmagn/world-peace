@@ -31,20 +31,20 @@ The first character of an identifier may not be a number.
 
 There is only one literal, the number literal.
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 5
 #+END_SRC
 
 The hexadecimal notation is also allowed:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 0xAC883
 #+END_SRC
 
 It is case insensitive. Similarly, the binary and octal notations
 are also available:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 0b1110010010
 0o12347838
 #+END_SRC
@@ -52,7 +52,7 @@ are also available:
 For better readability, underscores may be inserted anywhere in the
 number literal, except at the start of the numeric sequence:
 
-#+BEGIN_SRC rust
+#+BEGIN_SRC world-peace
 0x1233_8839 // valid
 0x_12334235 // invalid
 #+END_SRC
@@ -113,7 +113,7 @@ statements.
 Follows Rust, kinda. Here is an if in a function, which
 does an early return:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 dec name(num param1, num param2):
 --- if param1 == 0 {
 ---     ret 1;
@@ -133,7 +133,7 @@ The do loops are the one stop shop for your looping needs.
 
 First, as a for loop substitute:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 dec print_bytes(num bytes):
 --- do i = 0 --> len(bytes) {
 ---     print(bytes(i));
@@ -143,7 +143,7 @@ end
 
 This will increment one to i, but you can change the step:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 dec print_odd_bytes(num bytes):
 --- do i = 0 by 2 --> len(bytes) {
 ---     print(bytes(i));
@@ -159,7 +159,7 @@ the goal. Note that the goal (the expression after -->), is only evaluated once.
 
 Of course, you can also use the do loop as an infite loop:
 
-#+BEGIN_SRC rust
+#+BEGIN_SRC world-peace
 dec no_finish():
 --- do {
 ---    print(0);
@@ -169,7 +169,7 @@ end
 
 And as a while loop:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 dec while_loop():
 --- num n = 0;
 ---
@@ -186,7 +186,7 @@ end {
 Yea we got cases, habibi. They work almost identically to the pattern matching
 in =end= clauses, as seen below:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 dec decide_on_number(num n):
 --- num result = 0;
 ---
@@ -201,6 +201,7 @@ dec decide_on_number(num n):
 ---    result <- 0: result = 11,
 ---    _: print(0),
 --- }
+end
 #+END_SRC
 
 As you can see, all arms must be terminated with a comma. Empty arms cannot exist.
@@ -213,7 +214,7 @@ be tested in a case statement, but only one per arm.
 ** Declaration
 Functions are declared like this:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 dec name(num param1, num param2):
 --- // statements
 --- // more statements
@@ -234,7 +235,7 @@ All parameters are numbers or number arrays. The num keyword is not entirely use
 as you can use it to get a subarray or pattern match on an argument.
 
 This lets you overload functions, I guess:
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 dec fibonacci(num[=0] a):
 end {
     1
@@ -261,7 +262,7 @@ If you do not have any catch-all declaration, then a [] will be returned implici
 If you use the subarray, and the index range does not fit into the argument the caller provided,
 the parameter will be assigned a [] value.
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 dec five_to_ten(num[4..9] numbers):
 --- num string = ascii_num(numbers);
 --- print(string);
@@ -278,7 +279,7 @@ All functions have the implicit type of a number and/or number array.
 The final return value should be specified in the =end= clause, which looks
 like this:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 dec pow2(num n):
 end {
     n * n
@@ -287,7 +288,7 @@ end {
 
 Limited pattern matching is available in the end clause:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 dec factorial(num n):
 end {
     n <- 0: 1,
@@ -299,7 +300,7 @@ end {
 Pattern matching in end clause is detected by the presence of a colon in the
 end clause. You may also pattern match on arrays:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 dec my_fun(num list):
 end {
     // empty array
@@ -335,7 +336,7 @@ special catch all pattern. Like a default case for a switch.
 There is only one primitive type - the quasi numeric array. Why quasi?
 Because it also serves as the number type, which is an 64-bit integer.
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 num n = 5; // equivalent to [5]
 num arr = [1, 2, 3];
 #+END_SRC
@@ -394,7 +395,7 @@ Use num1[0] == num2[0] if you want to make use of coercion.
 
 There is only one way to declare a variable, with the =num= keyword:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 num n = 2;
 #+END_SRC
 
@@ -412,7 +413,7 @@ Use the = operator.
 Same parenthetical convention as in Rust. The first parameter may be supplied
 with an infix notation:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 fun(x, y);
 x.fun(y);
 
@@ -435,11 +436,11 @@ having comments in my grammar. They get replaced with equivalent whitespace
 before parsing.
 
 ** Single-line
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 // this is a single line comment
 #+END_SRC
 ** Multi-line
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 /* this is a
    multi line comment */
 #+END_SRC
@@ -452,7 +453,7 @@ Modules names are dictated by file names. Only one level of module is supported,
 a project cannot have overlapping module names. The compiler will search for
 modules recursively in a folder.
 
-#+BEGIN_SRC rust
+#+BEGIN_SRC world-peace
 // Will recursively search for a file called hello.wp
 // Conflicts will cause errors
 load hello;
@@ -461,7 +462,7 @@ load hello;
 The name of the module may also be an URL (without the HTTPS:// part, containing ascii characters only),
 which will fetch a single module into your module program from the internet
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 // This will fetch the file from this URL -- has to end with a .wp extension
 load lho.sh/p/cool_lib.wp;
 #+END_SRC
@@ -475,7 +476,7 @@ the global variables and functions in that module into scope.
 
 Each program must have a main function with the following signature:
 
-#+BEGIN_SRC
+#+BEGIN_SRC world-peace
 dec main():
 ---
 --- // statements
@@ -496,7 +497,12 @@ folder of the project and entrypoint file as argument.
 peace src/ src/main.wp -o my_program
 #+END_SRC
 
-Main functions in non-entrypoint files are ignored and not compiled into the binary
+Main functions in non-entrypoint files are ignored and not compiled into the binary.
+
+A source file consists of any number of the following:
+- Function declarations
+- Global variables
+- load statements
 
 * Standard library
 
@@ -525,3 +531,82 @@ Convenience for reading a single byte from stdin
 
 A nested array with the program name as bytes as first element, and the
 commandline arguments as following elements. Also byte arrays, essentially.
+
+* Fibonacci example
+
+#+BEGIN_SRC world-peace
+dec fibonacci_sequence(num n):
+--- num a = 0;
+--- num b = 1;
+--- num sequence = [a, b];
+---
+--- if n <= 2 {
+---     ret sequence;
+--- }
+---
+--- do i = 2 --> n {
+---     num next = a + b;
+---     sequence.push(next);
+---     a = b;
+---     b = next;
+---
+---     case {
+---         next <- 89: print([70, 105, 98, 111, 110, 97, 99, 99, 105, 33]),  // "Fibonacci!" in ASCII
+---         next % 10 <- 0: print(next),
+---         _: {},
+---     }
+--- }
+---
+--- num sum = 0;
+--- do i = 0 --> len(sequence) {
+---     sum = sum + sequence[i];
+--- }
+end {
+    n <- 0: [],
+    n <- 1: [0],
+    sum % 2 <- 0: sequence,
+    _: [sum, len(sequence)],
+}
+
+#+END_SRC
+
+* Print digits
+
+#+BEGIN_SRC world-peace
+dec print_number(num n):
+--- num digits = [];
+--- num abs_n = n;
+---
+--- if n < 0 {
+---     print(45);  // ASCII for '-'
+---     abs_n = 0 - n;  // Make positive
+--- }
+---
+--- if abs_n == 0 {
+---     digits = [48];  // ASCII for '0'
+--- } else {
+---     do abs_n > 0 {
+---         num digit = abs_n % 10;
+---         digits.push(digit + 48);  // Convert to ASCII
+---         abs_n = abs_n / 10;
+---     }
+--- }
+---
+--- // Print digits in reverse order
+--- do i = len(digits) - 1 --> 0 by -1 {
+---     print(digits[i]);
+--- }
+---
+--- // Print newline
+--- print(10);
+end
+
+dec main():
+--- print_number(12345);
+--- print_number(-9876);
+--- print_number(0);
+--- print_number(1000000);
+end {
+    0
+}
+#+END_SRC
