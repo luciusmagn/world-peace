@@ -1,0 +1,527 @@
+:PROPERTIES:
+:ID:       7951062f-8363-4708-9e53-2986a2d088e8
+:END:
+#+title: World Peace programming language
+
+* Lexical Elements
+** Keywords
+
+| Keyword | Purpose                                               |
+|---------+-------------------------------------------------------|
+| dec     | Declares a function                                   |
+| end     | Ends a function declaration and provides return value |
+| ret     | Early return from a function                          |
+| do      | Starts a loop construct                               |
+| by      | Specifies step size in a do loop                      |
+| case    | Starts a switch/case construct                        |
+| num     | Declares a variable or parameter                      |
+| load    | Imports a module                                      |
+| if      | Starts an if statement                                |
+| else    | Alternative branch in an if statement                 |
+| <-      | Used in pattern matching in end clauses               |
+| -->     | Used in stepping loops                                |
+
+** Identifiers
+
+Identifiers are alphanumeric, and may contain underscores.
+
+The first character of an identifier may not be a number.
+
+** Literals
+
+There is only one literal, the number literal.
+
+#+BEGIN_SRC
+5
+#+END_SRC
+
+The hexadecimal notation is also allowed:
+
+#+BEGIN_SRC
+0xAC883
+#+END_SRC
+
+It is case insensitive. Similarly, the binary and octal notations
+are also available:
+
+#+BEGIN_SRC
+0b1110010010
+0o12347838
+#+END_SRC
+
+For better readability, underscores may be inserted anywhere in the
+number literal, except at the start of the numeric sequence:
+
+#+BEGIN_SRC rust
+0x1233_8839 // valid
+0x_12334235 // invalid
+#+END_SRC
+
+** Operators
+
+Same as Rust, minus the unneeded stuff.
+
+| Tier | Operators            | Description                          |
+|------+----------------------+--------------------------------------|
+|    1 | []                   | Index                                |
+|      | ()                   | Function call                        |
+|      | .                    | Alternate function call syntax       |
+|------+----------------------+--------------------------------------|
+|    2 | !                    | Logical NOT (boolean unary operator) |
+|      | -                    | Unary minus                          |
+|------+----------------------+--------------------------------------|
+|    3 | *                    | Multiplication                       |
+|      | /                    | Division                             |
+|      | %                    | Remainder                            |
+|------+----------------------+--------------------------------------|
+|    4 | +                    | Addition                             |
+|      | -                    | Subtraction                          |
+|------+----------------------+--------------------------------------|
+|    5 | <<                   | Left shift                           |
+|      | >>                   | Right shift                          |
+|------+----------------------+--------------------------------------|
+|    6 | &                    | Bitwise AND                          |
+|------+----------------------+--------------------------------------|
+|    7 | ^                    | Bitwise XOR                          |
+|------+----------------------+--------------------------------------|
+|    8 | ¦                    | Bitwise OR                           |
+|------+----------------------+--------------------------------------|
+|    9 | ==                   | Equal                                |
+|      | !=                   | Not equal                            |
+|      | <                    | Less than                            |
+|      | >                    | Greater than                         |
+|      | <=                   | Less than or equal                   |
+|      | >=                   | Greater than or equal                |
+|------+----------------------+--------------------------------------|
+|   10 | &&                   | Logical AND                          |
+|------+----------------------+--------------------------------------|
+|   11 | ¦¦                   | Logical OR                           |
+|------+----------------------+--------------------------------------|
+|   12 | =                    | Assignment                           |
+|      | +=, -=, *=, /=, %=     | Compound assignment                  |
+|      | &=, ¦=, ^=, <<=, >>= | Bitwise compound assignment          |
+
+
+** Punctuation
+
+Same as Rust, I guess? No punctuation, really. Semicolons terminate
+statements.
+
+* Control Structures
+** If-Else
+
+Follows Rust, kinda. Here is an if in a function, which
+does an early return:
+
+#+BEGIN_SRC
+dec name(num param1, num param2):
+--- if param1 == 0 {
+---     ret 1;
+--- } else if param2 == 3 {
+---     ret 2;
+--- } else {
+---     print(0);
+--- }
+end {
+   0 // default return value
+}
+#+END_SRC
+
+** Loops
+
+The do loops are the one stop shop for your looping needs.
+
+First, as a for loop substitute:
+
+#+BEGIN_SRC
+dec print_bytes(num bytes):
+--- do i = 0 --> len(bytes) {
+---     print(bytes(i));
+--- }
+end
+#+END_SRC
+
+This will increment one to i, but you can change the step:
+
+#+BEGIN_SRC
+dec print_odd_bytes(num bytes):
+--- do i = 0 by 2 --> len(bytes) {
+---     print(bytes(i));
+--- }
+end
+#+END_SRC
+
+The =by= clause may only have a number literal or a variable name set as the step size.
+The step size cannot be negative, sorry :(
+
+But the step down of the loop variable will be negative if it starts out bigger than
+the goal. Note that the goal (the expression after -->), is only evaluated once.
+
+Of course, you can also use the do loop as an infite loop:
+
+#+BEGIN_SRC rust
+dec no_finish():
+--- do {
+---    print(0);
+--- }
+end
+#+END_SRC
+
+And as a while loop:
+
+#+BEGIN_SRC
+dec while_loop():
+--- num n = 0;
+---
+--- do n < 4 {
+---     n = n + 1;
+--- }
+end {
+    n
+}
+#+END_SRC
+
+** Switch/Case
+
+Yea we got cases, habibi. They work almost identically to the pattern matching
+in =end= clauses, as seen below:
+
+#+BEGIN_SRC
+dec decide_on_number(num n):
+--- num result = 0;
+---
+--- case {
+---    n <- 1: result = 1,
+---    n <- 20:
+---        // this is a multiline arm
+---        do_something();
+---        // the last statement has
+---        // to be terminated with a comma
+---        result = 3,
+---    result <- 0: result = 11,
+---    _: print(0),
+--- }
+#+END_SRC
+
+As you can see, all arms must be terminated with a comma. Empty arms cannot exist.
+An arm can have multiple statements, with the non-last ones being terminated with semicolons.
+
+Arms can also have ranges as patterns after the left arrow. Multiple variables can
+be tested in a case statement, but only one per arm.
+
+* Functions
+** Declaration
+Functions are declared like this:
+
+#+BEGIN_SRC
+dec name(num param1, num param2):
+--- // statements
+--- // more statements
+end
+#+END_SRC
+
+As you can see, every line in the body of the function must start with triple dashes.
+
+World Peace is not actually whitespace sensitive, though, and statements may be stacked into a single line,
+separated by the mendatory semicolons.
+
+In other words, each statement starts with 0+ triple dash sequences.
+
+A function declaration ends with the =end= clause. This clause may provide a final return value.
+
+** Parameters
+All parameters are numbers or number arrays. The num keyword is not entirely useless,
+as you can use it to get a subarray or pattern match on an argument.
+
+This lets you overload functions, I guess:
+#+BEGIN_SRC
+dec fibonacci(num[=0] a):
+end {
+    1
+}
+
+dec fibonacci(num[=1] a):
+end {
+    1
+}
+
+dec fibonacci(num a):
+--- num new_b = fibonacci(a - 1);
+--- num new_a = fibonacci(a - 2);
+---
+--- // we will use these to compute the final value
+---
+end {
+   new_a + new_b
+}
+#+END_SRC
+
+If you do not have any catch-all declaration, then a [] will be returned implicitly.
+
+If you use the subarray, and the index range does not fit into the argument the caller provided,
+the parameter will be assigned a [] value.
+
+#+BEGIN_SRC
+dec five_to_ten(num[4..9] numbers):
+--- num string = ascii_num(numbers);
+--- print(string);
+end
+#+END_SRC
+
+I am afraid that parameters are pass-by-copy, but you can mutate stuff by returning the parameters back again :)
+
+Why else would we have nested jagged arrays than to simulate tuples?
+
+** Return Values
+All functions have the implicit type of a number and/or number array.
+
+The final return value should be specified in the =end= clause, which looks
+like this:
+
+#+BEGIN_SRC
+dec pow2(num n):
+end {
+    n * n
+}
+#+END_SRC
+
+Limited pattern matching is available in the end clause:
+
+#+BEGIN_SRC
+dec factorial(num n):
+end {
+    n <- 0: 1,
+    n <- 1: 1,
+         _: factorial(n - 1) * n,
+}
+#+END_SRC
+
+Pattern matching in end clause is detected by the presence of a colon in the
+end clause. You may also pattern match on arrays:
+
+#+BEGIN_SRC
+dec my_fun(num list):
+end {
+    // empty array
+    list <- []: 1,
+
+    // exact array
+    list <- [1, 2]: 2,
+
+    // array ends with
+    list <- [.., 1, 2]: 3,
+
+    // array starts with
+    list <- [1, 2, ..]: 4,
+
+    // anything else
+    _: 5,
+}
+#+END_SRC
+
+Patterns are tested from top to bottom, the first one that matches, wins.
+
+The left side of a pattern consists generally of three components:
+
+1. The variable to test
+2. The left arrow <-
+3. The pattern to test
+
+The pattern may only contain literals, as described above. The _ pattern is a
+special catch all pattern. Like a default case for a switch.
+
+* Data Types
+** Primitive Types
+There is only one primitive type - the quasi numeric array. Why quasi?
+Because it also serves as the number type, which is an 64-bit integer.
+
+#+BEGIN_SRC
+num n = 5; // equivalent to [5]
+num arr = [1, 2, 3];
+#+END_SRC
+
+Arrays may be nested and jagged. For convenience, three built-ins are available
+for arrays:
+- len()
+- push()
+- pop()
+
+Naturally, arrays can be indexed with the square brackets.
+
+There is no other type. There is no null, the empty array [] can serve that purpose.
+
+No booleans, all values are truthy, except for the following:
+*** []
+*** [0]
+*** [66, 61, 6c, 73, 65]
+*** [0, 0, 0...]
+meaning just 0s
+
+
+** Compound Types
+
+There are no compound types, although I suppose you could fake them with nested arrays.
+
+You can also pretend that a function starting with a capital letter is a constructor for
+a type and just return a jagged array, which pretends to be fields.
+
+But what do I know, eh?
+
+* Expressions
+** Arithmetic
+
+All the same arithmetic operators are available, as whet you are
+used to in normal languages. Same rules of precedence as in Rust.
+
+If you use an arithmetic operator with an array, then the first
+element of the array is taken. If the array is empty, it is coerced
+to a zero integer (0).
+
+** Logical
+
+Logical operators work the same as bitwise, except they reduce to
+0 and 1 respectively.
+
+** Comparison
+
+Use the comparison operators to ensure absolute equality between two
+variables. No coercion is being done here, 0 does not equal [0].
+
+Use num1[0] == num2[0] if you want to make use of coercion.
+
+* Statements
+** Variable Declaration
+
+There is only one way to declare a variable, with the =num= keyword:
+
+#+BEGIN_SRC
+num n = 2;
+#+END_SRC
+
+Uninitialized variables are not allowed. Global variables have the
+same syntax, but may not depend on one another for their inicializations.
+
+Do that in main() if you need to.
+
+** Assignment
+
+Use the = operator.
+
+** Function Call
+
+Same parenthetical convention as in Rust. The first parameter may be supplied
+with an infix notation:
+
+#+BEGIN_SRC
+fun(x, y);
+x.fun(y);
+
+// are the same
+#+END_SRC
+
+
+* Error Handling
+** Syntax Errors
+
+You will get a pretty compile error, I guess.
+
+** Runtime Errors
+
+What do you mean, runtime errors?
+
+* Comments
+Comments get a special treatment, since I do not want to fuck around with
+having comments in my grammar. They get replaced with equivalent whitespace
+before parsing.
+
+** Single-line
+#+BEGIN_SRC
+// this is a single line comment
+#+END_SRC
+** Multi-line
+#+BEGIN_SRC
+/* this is a
+   multi line comment */
+#+END_SRC
+
+Multi-line comments may be nested.
+
+* Program Structure
+** Modules/Files
+Modules names are dictated by file names. Only one level of module is supported,
+a project cannot have overlapping module names. The compiler will search for
+modules recursively in a folder.
+
+#+BEGIN_SRC rust
+// Will recursively search for a file called hello.wp
+// Conflicts will cause errors
+load hello;
+#+END_SRC
+
+The name of the module may also be an URL (without the HTTPS:// part, containing ascii characters only),
+which will fetch a single module into your module program from the internet
+
+#+BEGIN_SRC
+// This will fetch the file from this URL -- has to end with a .wp extension
+load lho.sh/p/cool_lib.wp;
+#+END_SRC
+
+** Scope
+
+Other modules can be imported with the load keyword. This will bring all of
+the global variables and functions in that module into scope.
+
+** Main function
+
+Each program must have a main function with the following signature:
+
+#+BEGIN_SRC
+dec main():
+---
+--- // statements
+---
+end {
+   return_value
+}
+#+END_SRC
+
+Where return value is, of course, a number. If you manage to make it an array, it will be
+truncated to its first element. Returning an empty array will result in the 0 exit code,
+meaning you can use the early =ret= statement with no number for correct states.
+
+Multiple modules may have the main() function. Remember that the compile takes both the
+folder of the project and entrypoint file as argument.
+
+#+BEGIN_SRC shell
+peace src/ src/main.wp -o my_program
+#+END_SRC
+
+Main functions in non-entrypoint files are ignored and not compiled into the binary
+
+* Standard library
+
+For your convenience, the following is available in the standard library,
+apart from the API available on
+
+** syscall(num number, ...)
+
+Calls a syscall with a given number and given parameters.
+
+Return: 0 on success, -1 on failure. On failure, errno is set
+
+** errno
+
+The last error number
+
+** print(bytes...)
+
+Convenience for the write syscall to stdout
+
+** read()
+
+Convenience for reading a single byte from stdin
+
+** argv
+
+A nested array with the program name as bytes as first element, and the
+commandline arguments as following elements. Also byte arrays, essentially.
