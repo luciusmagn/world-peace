@@ -763,3 +763,82 @@ Statements are still not that problematic:
 - Cases
 - Assignments
 - Function calls
+
+#+BEGIN_SRC lelwel :tangle src/peace.llw
+statement:
+      variable
+    | do_loop
+    | if_statement
+    | assignment
+    | call
+    ;
+
+#+END_SRC
+
+Assignments contain spacers for flexibility:
+
+#+BEGIN_SRC lelwel :tangle src/peace.llw
+assignment:
+    '---'* Name assignment_op '---'* expr '***'* ';'
+    ;
+
+assignment_op:
+      '='
+    | '-='
+    | '+='
+    | '/='
+    | '*='
+    | '>>='
+    | '<<='
+    | '^='
+    | '|='
+    | '&='
+    ;
+#+END_SRC
+
+Same goes for if statements, which are very C-like.
+
+#+BEGIN_SRC lelwel :tangle src/peace.llw
+if_statement:
+    if_clause elif_clause* [ else_clause ]
+    ;
+
+if_clause:
+    '---'* 'if' expr '---'* '{' statement* '---'* '}'
+    ;
+
+elif_clause:
+    '---'* 'else' if_clause
+    ;
+
+else_clause:
+    '---'* 'else' '---'* '{' statement* '---'* '}'
+    ;
+#+END_SRC
+
+Do loops have three forms:
+ - Infinite loops
+ - Stepping loops (like classic fors)
+ - Conditional loops
+
+#+BEGIN_SRC lelwel :tangle src/peace.llw
+do_loop:
+    '---'* 'do' do_clause '---'* '{' statement* '---'* '}'
+    ;
+
+do_clause:
+      do_cond_clause
+    | do_iter_clause
+    ;
+
+do_cond_clause: expr
+    ;
+
+do_iter_clause:
+    assignment [ do_iter_by_clause ] '-->' expr
+    ;
+
+do_iter_by_clause:
+    'by' expr
+    ;
+#+END_SRC
