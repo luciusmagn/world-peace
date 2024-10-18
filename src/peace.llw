@@ -1,5 +1,6 @@
 token Dec='dec'
       Ret='ret'
+      End='end'
       Do='do'
       By='by'
       Case='case'
@@ -13,8 +14,13 @@ token Dec='dec'
 
 token LPar='(' RPar=')' Comma=',' Colon=':' LBrace='{' RBrace='}' Period='.'
       Semi=';' Asn='=' Plus='+' Minus='-' Star='*' Slash='/' Not='!'
-      Caret='^' LAng='<' RAng='>' And='&' Percent='%' Pipe='|' LBracket='{'
-      RBracket='}' DoubleDot='..'
+      Caret='^' LAng='<' RAng='>' And='&' Percent='%' Pipe='|' LBracket='['
+      RBracket=']' DoubleDot='..' Underscore='_'
+      Equal='==' NotEqual='!=' LessEqual='<=' GreaterEqual='>='
+      LeftShift='<<' RightShift='>>' LogicalAnd='&&' LogicalOr='||'
+      RightShiftAssign='>>=' LeftShiftAssign='<<=' MinusAssign='-='
+      PlusAssign='+=' XorAssign='^=' DivAssign='/=' MulAssign='*='
+      OrAssign='|=' AndAssign='&='
       ;
 
 token Name='<name>' Integer='<integer>' Url='<url>';
@@ -33,33 +39,23 @@ item:
    | function
    ;
 
-load_stmt:
-     load_local
-   | load_url
-   ;
+load_stmt: 'load' source ';';
 
-load_local:
-     'load' Name
+source:
+     Name
+   | Url
    ;
-
-load_url:
-     'load' Url
-   ;
-
-maybe_spacer:
-     [ '---' ]
-     ;
 
 variable:
-     maybe_spacer 'num' Name '=' expr ';'
+     'num' Name '=' expr ';'
      ;
 
 function:
-     'dec' Name param_list '(' body end_expr
+     'dec' Name param_list ':' body end_expr
      ;
 
 param_list:
-     '(' [param (?1 ',' param)* [',']] ')'
+     '(' [param (',' param)*] ')'
      ;
 
 param:
@@ -71,14 +67,12 @@ body:
     ;
 
 end_expr:
-    'end' (
-         '{' end_body '}'
-    )
+    'end' '{' end_body '}'
     ;
 
 end_body:
-      pattern_match
-    | expr
+ ?1 pattern_match
+  | expr
     ;
 
 pattern_match:
@@ -86,15 +80,163 @@ pattern_match:
     ;
 
 match_arm:
-    name '<-' pattern ':' match_body ','
+    expr '<-' pattern ':' stmt_list ','
     ;
 
 pattern:
-      range
-    | Integer
-    | '!'* Name
+      pattern_single
+    | pattern_array
     ;
 
-range:
-    [ Integer | Name ] '..' [Integer | Name ]
+pattern_single:
+      Integer
+    | Name
+    | '..'
+    | '_'
+    ;
+
+pattern_array: '[' pattern_list ']';
+
+pattern_list: pattern_single (',' pattern_single)*;
+
+expr:
+    logical_or_expr
+    ;
+
+logical_or_expr:
+    logical_and_expr ('||' logical_and_expr)*
+    ;
+
+logical_and_expr:
+    bitwise_or_expr ('&&' bitwise_or_expr)*
+    ;
+
+bitwise_or_expr:
+    bitwise_xor_expr ('|' bitwise_xor_expr)*
+    ;
+
+bitwise_xor_expr:
+    bitwise_and_expr ('^' bitwise_and_expr)*
+    ;
+
+bitwise_and_expr:
+    equality_expr ('&' equality_expr)*
+    ;
+
+equality_expr:
+    relational_expr (('==' | '!=') relational_expr)*
+    ;
+
+relational_expr:
+    shift_expr (('<' | '>' | '<=' | '>=') shift_expr)*
+    ;
+
+shift_expr:
+    additive_expr (('<<' | '>>') additive_expr)*
+    ;
+
+additive_expr:
+    multiplicative_expr (('+' | '-') multiplicative_expr)*
+    ;
+
+multiplicative_expr:
+    unary_expr (('*' | '/' | '%') unary_expr)*
+    ;
+
+unary_expr:
+    ('!' | '-')* postfix_expr
+    ;
+
+postfix_expr:
+    primary_expr (('[' expr ']') | ('(' [expr_list] ')') | ('.' Name))*
+    ;
+
+primary_expr:
+    Name
+  | Integer
+  | array_literal
+  | '(' expr ')'
+    ;
+
+array_literal:
+    '[' [expr_list] ']'
+    ;
+
+expr_list:
+    expr (',' expr)*
+    ;
+
+assignment_op:
+      '='
+    | '-='
+    | '+='
+    | '/='
+    | '*='
+    | '>>='
+    | '<<='
+    | '^='
+    | '|='
+    | '&='
+    ;
+
+statement:
+    variable
+  | do_loop
+  | if_statement
+  | case_stmt
+  | ?1 assignment_stmt
+  | call_stmt
+  | ret_stmt
+    ;
+
+assignment_stmt:
+    Name assignment_op expr ';'
+    ;
+
+call_stmt:
+    postfix_expr ';'
+    ;
+
+if_statement:
+    'if' expr '{' statement* '}' ('else' (elif_clause | else_clause))*
+    ;
+
+elif_clause:
+    'if' expr '{' statement* '}'
+    ;
+
+else_clause:
+    '{' statement* '}'
+    ;
+
+do_loop:
+    'do' (?1 do_cond_clause | do_iter_clause) '{' statement* '}'
+    ;
+
+do_cond_clause:
+    expr
+    ;
+
+assignment:
+    Name assignment_op expr
+    ;
+
+do_iter_clause:
+    assignment [ 'by' expr ] '-->' expr
+    ;
+
+case_stmt:
+    'case' '{' case_arm* '}'
+    ;
+
+case_arm:
+    expr '<-' pattern ':' stmt_list ','
+    ;
+
+ret_stmt:
+    'ret' [expr] ';'
+    ;
+
+stmt_list:
+    statement+
     ;
