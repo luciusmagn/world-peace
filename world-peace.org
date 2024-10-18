@@ -643,6 +643,7 @@ token Whitespace;
 
 #+END_SRC
 
+** Whitespace
 Despite its looks, World Peace is actually whitespace-insensitive:
 
 #+BEGIN_SRC lelwel :tangle src/peace.llw
@@ -653,6 +654,7 @@ start file;
 
 #+END_SRC
 
+** Top-level
 A source file is composed of zero or more items. An item is:
 - Load statement for module imports
 - Global variable
@@ -670,6 +672,7 @@ item:
 
 #+END_SRC
 
+** Load statement
 A load statement is followed by either a Name, or a URL:
 
 #+BEGIN_SRC lelwel :tangle src/peace.llw
@@ -687,6 +690,7 @@ load_url:
    ;
 #+END_SRC
 
+** Variables and spacers
 A variable is the =num= keyword followed by a Name, an equals sign, and an expression,
 finally being terminated by a semicolon.
 
@@ -702,6 +706,7 @@ variable:
      ;
 #+END_SRC
 
+** Function
 A function declaration consists of the =dec= keyword, a Name, argument list, a colon,
 function body and the =end= clause:
 
@@ -734,6 +739,7 @@ end_body:
     ;
 #+END_SRC
 
+** Pattern-matching
 Naturally, since we got here, we need to tackle pattern matching:
 
 #+BEGIN_SRC lelwel :tangle src/peace.llw
@@ -756,6 +762,7 @@ range:
     ;
 #+END_SRC
 
+** Statements
 Statements are still not that problematic:
 - Variable declarations
 - Do loops
@@ -775,6 +782,7 @@ statement:
 
 #+END_SRC
 
+*** Assignments
 Assignments contain spacers for flexibility:
 
 #+BEGIN_SRC lelwel :tangle src/peace.llw
@@ -796,6 +804,7 @@ assignment_op:
     ;
 #+END_SRC
 
+*** If statements
 Same goes for if statements, which are very C-like.
 
 #+BEGIN_SRC lelwel :tangle src/peace.llw
@@ -816,6 +825,7 @@ else_clause:
     ;
 #+END_SRC
 
+*** Loops
 Do loops have three forms:
  - Infinite loops
  - Stepping loops (like classic fors)
