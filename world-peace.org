@@ -633,8 +633,10 @@ token Dec='dec'
 
 token LPar='(' RPar=')' Comma=',' Colon=':' LBrace='{' RBrace='}' Period='.'
       Semi=';' Asn='=' Plus='+' Minus='-' Star='*' Slash='/' Not='!'
-      Caret='^' LAng='<' RAng='>' And='&' Percent='%' Pipe='|' LBracket='{'
-      RBracket='}' DoubleDot='..'
+      Caret='^' LAng='<' RAng='>' And='&' Percent='%' Pipe='|' LBracket='['
+      RBracket=']' DoubleDot='..'
+      Equal='==' NotEqual='!=' LessEqual='<=' GreaterEqual='>='
+      LeftShift='<<' RightShift='>>' LogicalAnd='&&' LogicalOr='||'
       ;
 
 token Name='<name>' Integer='<integer>' Url='<url>';
@@ -651,7 +653,6 @@ skip Whitespace;
 
 start file;
 
-
 #+END_SRC
 
 ** Top-level
@@ -661,7 +662,6 @@ A source file is composed of zero or more items. An item is:
 - Function definition
 
 #+BEGIN_SRC lelwel :tangle src/peace.llw
-
 file: item*;
 
 item:
@@ -688,6 +688,8 @@ load_local:
 load_url:
      'load' Url
    ;
+
+Url: [^;\s]+;
 #+END_SRC
 
 ** Variables and spacers
@@ -712,7 +714,7 @@ function body and the =end= clause:
 
 #+BEGIN_SRC lelwel :tangle src/peace.llw
 function:
-     'dec' Name param_list '(' body end_expr
+     'dec' Name param_list ':' body end_expr
      ;
 
 param_list:
@@ -748,46 +750,103 @@ pattern_match:
     ;
 
 match_arm:
-    name '<-' pattern ':' match_body ','
+    expr '<-' pattern ':' stmt_list ','
     ;
 
 pattern:
-      range
-    | Integer
-    | '!'* Name
+      Integer
+    | Name
+    | '[' pattern_list ']'
+    | '..'
+    | '_'
     ;
 
-range:
-    [ Integer | Name ] '..' [Integer | Name ]
+pattern_list:
+      pattern (',' pattern)* [',' '..']
+    | '..'
+    ;
+#+END_SRC
+
+** Expressions
+Expressions include arithmetic, logical, and comparison operations:
+
+#+BEGIN_SRC lelwel :tangle src/peace.llw
+expr:
+      expr_bin
+    | expr_unary
+    | expr_call
+    | expr_index
+    | expr_literal
+    | expr_paren
+    | Name
+    ;
+
+expr_bin:
+      expr_bin ('*' | '/' | '%') expr_bin
+    | expr_bin ('+' | '-') expr_bin
+    | expr_bin ('<<' | '>>') expr_bin
+    | expr_bin '&' expr_bin
+    | expr_bin '^' expr_bin
+    | expr_bin '|' expr_bin
+    | expr_bin ('==' | '!=' | '<' | '>' | '<=' | '>=') expr_bin
+    | expr_bin '&&' expr_bin
+    | expr_bin '||' expr_bin
+    | expr_unary
+    ;
+
+expr_unary:
+      ('!' | '-') expr_unary
+    | expr_call
+    ;
+
+expr_call:
+      expr_call '(' [expr_list] ')'
+    | expr_call '.' Name '(' [expr_list] ')'
+    | expr_index
+    ;
+
+expr_index:
+      expr_index '[' expr ']'
+    | expr_literal
+    | Name
+    | expr_paren
+    ;
+
+expr_list:
+      expr (',' expr)*
+    ;
+
+expr_literal:
+      Integer
+    | array_literal
+    ;
+
+array_literal:
+      '[' [expr_list] ']'
+    ;
+
+expr_paren:
+      '(' expr ')'
     ;
 #+END_SRC
 
 ** Statements
-Statements are still not that problematic:
-- Variable declarations
-- Do loops
-- Ifs
-- Cases
-- Assignments
-- Function calls
+Statements include variable declarations, loops, if statements, case statements,
+assignments, function calls, and return statements:
 
 #+BEGIN_SRC lelwel :tangle src/peace.llw
 statement:
       variable
     | do_loop
     | if_statement
+    | case_stmt
     | assignment
     | call
+    | ret_stmt
     ;
 
-#+END_SRC
-
-*** Assignments
-Assignments contain spacers for flexibility:
-
-#+BEGIN_SRC lelwel :tangle src/peace.llw
 assignment:
-    '---'* Name assignment_op '---'* expr '***'* ';'
+    '---'* Name assignment_op '---'* expr '---'* ';'
     ;
 
 assignment_op:
@@ -802,12 +861,7 @@ assignment_op:
     | '|='
     | '&='
     ;
-#+END_SRC
 
-*** If statements
-Same goes for if statements, which are very C-like.
-
-#+BEGIN_SRC lelwel :tangle src/peace.llw
 if_statement:
     if_clause elif_clause* [ else_clause ]
     ;
@@ -823,15 +877,7 @@ elif_clause:
 else_clause:
     '---'* 'else' '---'* '{' statement* '---'* '}'
     ;
-#+END_SRC
 
-*** Loops
-Do loops have three forms:
- - Infinite loops
- - Stepping loops (like classic fors)
- - Conditional loops
-
-#+BEGIN_SRC lelwel :tangle src/peace.llw
 do_loop:
     '---'* 'do' do_clause '---'* '{' statement* '---'* '}'
     ;
@@ -850,5 +896,21 @@ do_iter_clause:
 
 do_iter_by_clause:
     'by' expr
+    ;
+
+case_stmt:
+    'case' '{' case_arm* '}'
+    ;
+
+case_arm:
+    expr '<-' pattern ':' stmt_list ','
+    ;
+
+ret_stmt:
+    'ret' [expr] ';'
+    ;
+
+call:
+    expr_call ';'
     ;
 #+END_SRC
