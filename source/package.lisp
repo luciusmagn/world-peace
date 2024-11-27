@@ -3,4 +3,5 @@
   (:export
    #:main
    #:run-compiler
-   #:run-repl))
+   #:run-repl
+   #:run-tests))

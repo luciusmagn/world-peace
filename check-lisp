@@ -4,4 +4,6 @@ set -eu
 sbcl --non-interactive \
   --eval '(require :asdf)' \
   --eval '(asdf:load-asd (merge-pathnames "world-peace.asd" (uiop:getcwd)))' \
-  --eval '(asdf:load-system :world-peace)'
+  --eval '(asdf:load-system :world-peace)' \
+  --eval '(load "tests.lisp")' \
+  --eval '(world-peace:run-tests)'
