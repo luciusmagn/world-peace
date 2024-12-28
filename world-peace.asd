@@ -11,6 +11,7 @@
     :components
     ((:file "package")
      (:file "value")
+     (:file "lexer")
      (:file "parser")
      (:file "compiler")
      (:file "repl")

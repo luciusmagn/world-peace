@@ -64,8 +64,41 @@
   (is-equal 0 (value->exit-code (empty-array-value)))
   (is-equal 255 (value->exit-code -1)))
 
+(defun token-types (tokens)
+  "Return token types from TOKENS."
+  (loop for token across tokens
+        collect (token-type token)))
+
+(defun token-values (tokens)
+  "Return non-null token values from TOKENS."
+  (loop for token across tokens
+        when (token-value token)
+          collect (token-value token)))
+
+(defun test-lexer ()
+  "Test World Peace lexical analysis."
+  (is-equal '(:dec :name :left-parenthesis :num :name :right-parenthesis
+              :colon :spacer :ret :integer :semicolon :end :left-brace
+              :integer :right-brace :eof)
+            (token-types (lex-source "dec f(num x): --- ret 0; end { 1 }")))
+  (is-equal '("f" "x" 0 1)
+            (token-values (lex-source "dec f(num x): --- ret 0; end { 1 }")))
+  (is-equal (list #xac883 #b1110010010 #o123)
+            (token-values (lex-source "0xAC883 0b1110010010 0o123")))
+  (is-equal '(:load :url :semicolon :load :name :semicolon :eof)
+            (token-types (lex-source "load lho.sh/p/cool_lib.wp; load hello;")))
+  (is-equal '("lho.sh/p/cool_lib.wp" "hello")
+            (token-values (lex-source "load lho.sh/p/cool_lib.wp; load hello;")))
+  (is-equal '(:integer :plus :integer :eof)
+            (token-types (lex-source "1 /* nested /* comment */ ok */ + 2")))
+  (is-equal '(:spacer :until :minus :integer :pattern-arrow :eof)
+            (token-types (lex-source "--- --> -1 <-")))
+  (is-equal '(:pipe :logical-or :or-assign :eof)
+            (token-types (lex-source "| || |="))))
+
 (defun run-tests ()
   "Run the World Peace test suite."
   (setf *test-count* 0)
   (test-runtime-values)
+  (test-lexer)
   (format t "~D assertions passed.~%" *test-count*))
