@@ -96,9 +96,67 @@
   (is-equal '(:pipe :logical-or :or-assign :eof)
             (token-types (lex-source "| || |="))))
 
+(defun expression-sexp (expression)
+  "Return a compact list representation of EXPRESSION for tests."
+  (typecase expression
+    (integer-expression
+     (integer-expression-value expression))
+    (name-expression
+     (intern (string-upcase (name-expression-name expression)) :keyword))
+    (array-expression
+     (cons :array
+           (mapcar #'expression-sexp
+                   (array-expression-elements expression))))
+    (unary-expression
+     (list (unary-expression-operator expression)
+           (expression-sexp (unary-expression-operand expression))))
+    (binary-expression
+     (list (binary-expression-operator expression)
+           (expression-sexp (binary-expression-left expression))
+           (expression-sexp (binary-expression-right expression))))
+    (call-expression
+     (list* :call
+            (expression-sexp (call-expression-callee expression))
+            (mapcar #'expression-sexp
+                    (call-expression-arguments expression))))
+    (method-call-expression
+     (list* :method-call
+            (expression-sexp (method-call-expression-receiver expression))
+            (intern (string-upcase (method-call-expression-name expression)) :keyword)
+            (mapcar #'expression-sexp
+                    (method-call-expression-arguments expression))))
+    (method-reference-expression
+     (list :method-reference
+           (expression-sexp (method-reference-expression-receiver expression))
+           (intern (string-upcase (method-reference-expression-name expression)) :keyword)))
+    (index-expression
+     (list :index
+           (expression-sexp (index-expression-receiver expression))
+           (expression-sexp (index-expression-index expression))))))
+
+(defun test-expression-parser ()
+  "Test World Peace expression parsing."
+  (is-equal '(:add 1 (:multiply 2 3))
+            (expression-sexp (parse-expression-source "1 + 2 * 3")))
+  (is-equal '(:multiply (:add 1 2) 3)
+            (expression-sexp (parse-expression-source "(1 + 2) * 3")))
+  (is-equal '(:logical-or
+              (:logical-and
+               (:equal (:add :a (:multiply :b :c)) :d)
+               (:not :x))
+              (:negate 2))
+            (expression-sexp (parse-expression-source "a + b * c == d && !x || -2")))
+  (is-equal '(:index (:call :f :x (:array 1 2)) 0)
+            (expression-sexp (parse-expression-source "f(x, [1, 2])[0]")))
+  (is-equal '(:method-call :sequence :push :next)
+            (expression-sexp (parse-expression-source "sequence.push(next)")))
+  (is-equal '(:bit-or (:bit-and 1 2) (:bit-xor 3 4))
+            (expression-sexp (parse-expression-source "1 & 2 | 3 ^ 4"))))
+
 (defun run-tests ()
   "Run the World Peace test suite."
   (setf *test-count* 0)
   (test-runtime-values)
   (test-lexer)
+  (test-expression-parser)
   (format t "~D assertions passed.~%" *test-count*))
