@@ -153,10 +153,53 @@
   (is-equal '(:bit-or (:bit-and 1 2) (:bit-xor 3 4))
             (expression-sexp (parse-expression-source "1 & 2 | 3 ^ 4"))))
 
+(defun pattern-sexp (pattern)
+  "Return a compact list representation of PATTERN for tests."
+  (typecase pattern
+    (wildcard-pattern :_)
+    (literal-pattern (literal-pattern-value pattern))
+    (name-pattern (intern (string-upcase (name-pattern-name pattern)) :keyword))
+    (range-pattern (list :range
+                         (range-pattern-start pattern)
+                         (range-pattern-end pattern)))
+    (rest-pattern :..)
+    (array-pattern (cons :array
+                         (mapcar #'pattern-sexp
+                                 (array-pattern-elements pattern))))))
+
+(defun test-patterns ()
+  "Test pattern parsing and matching."
+  (is-equal '(:array :.. 1 2)
+            (pattern-sexp (parse-pattern-source "[.., 1, 2]")))
+  (is-equal '(:array 1 2 :..)
+            (pattern-sexp (parse-pattern-source "[1, 2, ..]")))
+  (is-equal '(:range -2 4)
+            (pattern-sexp (parse-pattern-source "-2..4")))
+  (is (pattern-match-p (parse-pattern-source "_")
+                       (make-array-value 1 2)))
+  (is (pattern-match-p (parse-pattern-source "1")
+                       1))
+  (is (not (pattern-match-p (parse-pattern-source "1")
+                            (make-array-value 1))))
+  (is (pattern-match-p (parse-pattern-source "2..5")
+                       4))
+  (is (pattern-match-p (parse-pattern-source "[1, 2]")
+                       (make-array-value 1 2)))
+  (is (pattern-match-p (parse-pattern-source "[.., 2]")
+                       (make-array-value 0 1 2)))
+  (is (pattern-match-p (parse-pattern-source "[1, ..]")
+                       (make-array-value 1 2 3)))
+  (is (not (pattern-match-p (parse-pattern-source "[1, 2]")
+                            (make-array-value 1 2 3))))
+  (is (pattern-match-p (parse-pattern-source "expected")
+                       9
+                       '(("expected" . 9)))))
+
 (defun run-tests ()
   "Run the World Peace test suite."
   (setf *test-count* 0)
   (test-runtime-values)
   (test-lexer)
   (test-expression-parser)
+  (test-patterns)
   (format t "~D assertions passed.~%" *test-count*))

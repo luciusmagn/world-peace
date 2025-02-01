@@ -58,6 +58,29 @@
   receiver
   index)
 
+(defstruct wildcard-pattern
+  "A pattern that matches any value.")
+
+(defstruct literal-pattern
+  "A strict literal value pattern."
+  value)
+
+(defstruct name-pattern
+  "A pattern that matches the value bound to NAME."
+  (name "" :type string))
+
+(defstruct range-pattern
+  "An inclusive integer range pattern."
+  (start 0 :type integer-value)
+  (end   0 :type integer-value))
+
+(defstruct rest-pattern
+  "A rest marker inside an array pattern.")
+
+(defstruct array-pattern
+  "An array pattern."
+  (elements '() :type list))
+
 ;;;; -- Parser State --
 
 (defstruct parser
@@ -230,6 +253,55 @@
   (let ((parser (make-parser :tokens (lex-source source))))
     (prog1 (parse-expression parser)
       (expect-token parser :eof "Expected end of expression"))))
+
+;;;; -- Patterns --
+
+(defun parse-pattern-integer (parser)
+  "Parse a possibly negative integer pattern component."
+  (let ((negative-p (match-token parser :minus)))
+    (let ((token (expect-token parser :integer "Expected integer pattern")))
+      (if negative-p
+          (normalize-integer (- (token-value token)))
+          (token-value token)))))
+
+(defun parse-pattern (parser &key allow-rest)
+  "Parse a World Peace pattern."
+  (cond
+    ((match-token parser :underscore)
+     (make-wildcard-pattern))
+    ((and allow-rest
+          (match-token parser :double-dot))
+     (make-rest-pattern))
+    ((match-token parser :left-bracket)
+     (make-array-pattern :elements (parse-pattern-list parser)))
+    ((or (parser-at-p parser :integer)
+         (parser-at-p parser :minus))
+     (let ((start (parse-pattern-integer parser)))
+       (if (match-token parser :double-dot)
+           (make-range-pattern :start start
+                               :end (parse-pattern-integer parser))
+           (make-literal-pattern :value start))))
+    ((match-token parser :name)
+     (make-name-pattern :name (token-value (previous-token parser))))
+    (t
+     (parser-error parser "Expected pattern"))))
+
+(defun parse-pattern-list (parser)
+  "Parse array pattern elements."
+  (let ((patterns '()))
+    (unless (parser-at-p parser :right-bracket)
+      (loop
+        (push (parse-pattern parser :allow-rest t) patterns)
+        (unless (match-token parser :comma)
+          (return))))
+    (expect-token parser :right-bracket "Expected ] after pattern")
+    (nreverse patterns)))
+
+(defun parse-pattern-source (source)
+  "Parse SOURCE as one World Peace pattern."
+  (let ((parser (make-parser :tokens (lex-source source))))
+    (prog1 (parse-pattern parser)
+      (expect-token parser :eof "Expected end of pattern"))))
 
 (defun parse-source (source)
   "Parse SOURCE into a World Peace syntax tree."
