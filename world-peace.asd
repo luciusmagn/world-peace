@@ -13,6 +13,7 @@
      (:file "value")
      (:file "lexer")
      (:file "parser")
+     (:file "match")
      (:file "compiler")
      (:file "repl")
      (:file "main"))))
