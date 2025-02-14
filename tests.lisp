@@ -195,6 +195,145 @@
                        9
                        '(("expected" . 9)))))
 
+(declaim (ftype function statement-sexp case-arm-sexp))
+
+(defun statement-sexp (statement)
+  "Return a compact list representation of STATEMENT for tests."
+  (typecase statement
+    (variable-statement
+     (let ((declaration (variable-statement-declaration statement)))
+       (list :num
+             (intern (string-upcase (variable-declaration-name declaration)) :keyword)
+             (expression-sexp (variable-declaration-expression declaration)))))
+    (assignment-statement
+     (list :assign
+           (intern (string-upcase (assignment-statement-name statement)) :keyword)
+           (assignment-statement-operator statement)
+           (expression-sexp (assignment-statement-expression statement))))
+    (expression-statement
+     (list :expr
+           (expression-sexp (expression-statement-expression statement))))
+    (return-statement
+     (list :ret
+           (and (return-statement-expression statement)
+                (expression-sexp (return-statement-expression statement)))))
+    (if-statement
+     (list :if
+           (expression-sexp (if-statement-condition statement))
+           (mapcar #'statement-sexp (if-statement-then-body statement))
+           (mapcar #'statement-sexp (if-statement-else-body statement))))
+    (do-statement
+     (list :do
+           (do-statement-kind statement)
+           (and (do-statement-assignment statement)
+                (statement-sexp (do-statement-assignment statement)))
+           (and (do-statement-step statement)
+                (expression-sexp (do-statement-step statement)))
+           (and (do-statement-goal statement)
+                (expression-sexp (do-statement-goal statement)))
+           (and (do-statement-condition statement)
+                (expression-sexp (do-statement-condition statement)))
+           (mapcar #'statement-sexp (do-statement-body statement))))
+    (case-statement
+     (cons :case
+           (mapcar #'case-arm-sexp (case-statement-arms statement))))))
+
+(defun case-arm-sexp (arm)
+  "Return a compact list representation of ARM for tests."
+  (list :arm
+        (and (case-arm-test-expression arm)
+             (expression-sexp (case-arm-test-expression arm)))
+        (pattern-sexp (case-arm-pattern arm))
+        (mapcar #'statement-sexp (case-arm-body arm))))
+
+(defun end-clause-sexp (end-clause)
+  "Return a compact list representation of END-CLAUSE for tests."
+  (cond
+    ((end-clause-arms end-clause)
+     (cons :end-arms
+           (mapcar (lambda (arm)
+                     (list (and (pattern-arm-test-expression arm)
+                                (expression-sexp
+                                 (pattern-arm-test-expression arm)))
+                           (pattern-sexp (pattern-arm-pattern arm))
+                           (expression-sexp (pattern-arm-result arm))))
+                   (end-clause-arms end-clause))))
+    ((end-clause-expression end-clause)
+     (list :end (expression-sexp (end-clause-expression end-clause))))
+    (t
+     :end-empty)))
+
+(defun parameter-sexp (parameter)
+  "Return a compact list representation of PARAMETER for tests."
+  (list (intern (string-upcase (parameter-name parameter)) :keyword)
+        (typecase (parameter-filter parameter)
+          (null nil)
+          (parameter-pattern-filter
+           (list :pattern
+                 (pattern-sexp
+                  (parameter-pattern-filter-pattern
+                   (parameter-filter parameter)))))
+          (parameter-slice-filter
+           (list :slice
+                 (parameter-slice-filter-start (parameter-filter parameter))
+                 (parameter-slice-filter-end (parameter-filter parameter)))))))
+
+(defun item-sexp (item)
+  "Return a compact list representation of top-level ITEM for tests."
+  (typecase item
+    (load-item
+     (list :load (load-item-source item) (load-item-url-p item)))
+    (variable-declaration
+     (list :global
+           (intern (string-upcase (variable-declaration-name item)) :keyword)
+           (expression-sexp (variable-declaration-expression item))))
+    (function-declaration
+     (list :dec
+           (intern (string-upcase (function-declaration-name item)) :keyword)
+           (mapcar #'parameter-sexp (function-declaration-parameters item))
+           (mapcar #'statement-sexp (function-declaration-body item))
+           (end-clause-sexp (function-declaration-end-clause item))))))
+
+(defun program-sexp (source)
+  "Parse SOURCE and return a compact program representation."
+  (mapcar #'item-sexp
+          (program-items (parse-source source))))
+
+(defun test-file-parser ()
+  "Test top-level, statement, and end-clause parsing."
+  (is-equal '((:load "hello" nil)
+              (:global :g 1)
+              (:dec :f ((:a (:pattern 0)) (:xs (:slice 1 3)) (:n nil))
+               ((:num :total 0)
+                (:do :step (:assign :i :assign 0) -1 :n nil
+                 ((:assign :total :add :i)))
+                (:if (:equal :n 0)
+                 ((:ret (:array)))
+                 ((:expr (:call :print :n))))
+                (:case
+                 (:arm :n 1 ((:assign :total :assign 1)))
+                 (:arm nil :_ nil)))
+               (:end-arms
+                (:n 0 (:array))
+                (nil :_ :total))))
+            (program-sexp
+             "load hello;
+              num g = 1;
+              dec f(num[=0] a, num[1..3] xs, num n):
+              --- num total = 0;
+              --- do i = 0 by -1 --> n { total += i; }
+              --- if n == 0 { ret []; } else { print(n); }
+              --- case { n <- 1: total = 1, _: {}, }
+              end { n <- 0: [], _: total, }"))
+  (is-equal '((:dec :forever nil
+               ((:do :forever nil nil nil nil
+                 ((:expr (:call :print 0)))))
+               :end-empty))
+            (program-sexp
+             "dec forever():
+              --- do { print(0); }
+              end")))
+
 (defun run-tests ()
   "Run the World Peace test suite."
   (setf *test-count* 0)
@@ -202,4 +341,5 @@
   (test-lexer)
   (test-expression-parser)
   (test-patterns)
+  (test-file-parser)
   (format t "~D assertions passed.~%" *test-count*))
