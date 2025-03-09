@@ -334,6 +334,56 @@
               --- do { print(0); }
               end")))
 
+(defun test-evaluator ()
+  "Test World Peace evaluation."
+  (is-value-equal
+   9
+   (evaluate-source
+    "dec main():
+     --- num values = [1, 2];
+     --- values.push(3);
+     --- num total = 0;
+     --- do i = 0 --> len(values) {
+     ---   total += values[i];
+     --- }
+     end { total + len(values) }"))
+  (is-value-equal
+   55
+   (evaluate-source
+    "dec fibonacci(num[=0] n):
+     end { 0 }
+
+     dec fibonacci(num[=1] n):
+     end { 1 }
+
+     dec fibonacci(num n):
+     end { fibonacci(n - 1) + fibonacci(n - 2) }
+
+     dec main():
+     end { fibonacci(10) }"))
+  (is-value-equal
+   (make-array-value 1 2)
+   (evaluate-source
+    "dec choose(num n):
+     end {
+       n <- 0: [],
+       n <- 1: [1],
+            _: [1, 2],
+     }
+
+     dec main():
+     end { choose(9) }"))
+  (let ((output (make-string-output-stream)))
+    (is-value-equal
+     0
+     (evaluate-source
+      "dec main():
+       --- print([72, 105, 10]);
+       end { 0 }"
+      :output-stream output))
+    (is-equal "Hi
+" (get-output-stream-string output))))
+
 (defun run-tests ()
   "Run the World Peace test suite."
   (setf *test-count* 0)
@@ -342,4 +392,5 @@
   (test-expression-parser)
   (test-patterns)
   (test-file-parser)
+  (test-evaluator)
   (format t "~D assertions passed.~%" *test-count*))
