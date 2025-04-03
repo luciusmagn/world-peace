@@ -14,6 +14,7 @@
      (:file "lexer")
      (:file "parser")
      (:file "match")
+     (:file "evaluator")
      (:file "compiler")
      (:file "repl")
      (:file "main"))))
