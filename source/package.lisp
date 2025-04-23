@@ -3,5 +3,6 @@
   (:export
    #:main
    #:run-compiler
+   #:run-source-program
    #:run-repl
    #:run-tests))

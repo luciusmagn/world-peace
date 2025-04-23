@@ -4,7 +4,7 @@
 
 (defun usage (&optional (stream *standard-output*))
   "Print command-line usage to STREAM."
-  (format stream "usage: peace [repl | compile SOURCE-ROOT ENTRYPOINT -o OUTPUT]~%"))
+  (format stream "usage: peace [repl | run SOURCE-ROOT ENTRYPOINT | compile SOURCE-ROOT ENTRYPOINT -o OUTPUT]~%"))
 
 (defun main ()
   "Run the World Peace command-line entry point."
@@ -25,6 +25,17 @@
              (run-compiler :source-root source-root
                            :entrypoint entrypoint
                            :output output)
+             (progn
+               (usage *error-output*)
+               (uiop:quit 64)))))
+      ((string= (first arguments) "run")
+       (destructuring-bind (&optional source-root entrypoint &rest extra)
+           (rest arguments)
+         (if (and source-root
+                  entrypoint
+                  (null extra))
+             (run-source-program :source-root source-root
+                                 :entrypoint entrypoint)
              (progn
                (usage *error-output*)
                (uiop:quit 64)))))
