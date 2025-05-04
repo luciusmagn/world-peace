@@ -239,3 +239,23 @@
                           0
                           (value->integer (aref elements 0))))))))
     (ldb (byte 8 0) integer)))
+
+(defun string->byte-array (string)
+  "Return STRING as a World Peace byte array."
+  (apply #'make-array-value
+         (loop for character across string
+               collect (char-code character))))
+
+(defun write-value-readable (value &optional (stream *standard-output*))
+  "Write VALUE in a readable World Peace shape to STREAM."
+  (etypecase value
+    (integer-value
+     (format stream "~D" value))
+    (array-value
+     (write-char #\[ stream)
+     (loop for index below (length (array-value-elements value))
+           do (when (plusp index)
+                (format stream ", "))
+              (write-value-readable (aref (array-value-elements value) index)
+                                    stream))
+     (write-char #\] stream))))
