@@ -384,6 +384,42 @@
     (is-equal "Hi
 " (get-output-stream-string output))))
 
+(defun write-test-file (pathname contents)
+  "Write CONTENTS to PATHNAME for tests."
+  (ensure-directories-exist pathname)
+  (with-open-file (stream pathname
+                          :direction :output
+                          :if-exists :supersede
+                          :if-does-not-exist :create)
+    (write-string contents stream)))
+
+(defun test-module-loading ()
+  "Test compiler module loading."
+  (let* ((root (merge-pathnames
+                (format nil "world-peace-test-~D/" (get-universal-time))
+                (uiop:temporary-directory)))
+         (main (merge-pathnames "main.wp" root))
+         (util (merge-pathnames "nested/util.wp" root)))
+    (unwind-protect
+         (progn
+           (write-test-file
+            main
+            "load util;
+             dec main():
+             end { answer() }")
+           (write-test-file
+            util
+            "dec main():
+             end { 99 }
+
+             dec answer():
+             end { 42 }")
+           (is-value-equal 42
+                           (evaluate-program
+                            (load-entry-program root "main.wp"))))
+      (when (probe-file root)
+        (uiop:delete-directory-tree root :validate t)))))
+
 (defun run-tests ()
   "Run the World Peace test suite."
   (setf *test-count* 0)
@@ -393,4 +429,5 @@
   (test-patterns)
   (test-file-parser)
   (test-evaluator)
+  (test-module-loading)
   (format t "~D assertions passed.~%" *test-count*))
