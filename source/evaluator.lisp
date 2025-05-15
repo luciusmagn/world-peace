@@ -151,6 +151,16 @@
   "Return true when NAME is a builtin function."
   (member name '("len" "push" "pop" "print" "read" "syscall") :test #'string=))
 
+(defun runtime-function-bound-p (runtime name)
+  "Return true when RUNTIME has a function named NAME."
+  (and (gethash name (runtime-functions runtime)) t))
+
+(defun callable-value-p (runtime environment name)
+  "Return true when NAME is bound as a callable value."
+  (or (environment-bound-p environment name)
+      (runtime-global-bound-p runtime name)
+      (string= name "argv")))
+
 ;;;; -- Expression Evaluation --
 
 (defun apply-binary-operator (operator left right)
@@ -200,11 +210,20 @@
                                              (call-expression-arguments expression))))
     (typecase callee
       (name-expression
-       (call-function-by-name runtime
-                              (name-expression-name callee)
-                              arguments))
+       (let ((name (name-expression-name callee)))
+         (if (or (builtin-name-p name)
+                 (runtime-function-bound-p runtime name)
+                 (not (callable-value-p runtime environment name)))
+             (call-function-by-name runtime name arguments)
+             (if (= (length arguments) 1)
+                 (value-index (environment-ref runtime environment name)
+                              (first arguments))
+                 (empty-array-value)))))
       (t
-       (runtime-error "Only named functions can be called")))))
+       (if (= (length arguments) 1)
+           (value-index (evaluate-expression runtime environment callee)
+                        (first arguments))
+           (empty-array-value))))))
 
 (defun evaluate-method-call (runtime environment expression)
   "Evaluate a method-call EXPRESSION."
