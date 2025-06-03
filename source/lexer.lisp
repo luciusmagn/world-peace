@@ -193,6 +193,9 @@
                      (or (char= (aref source scan-start) #\_)
                          (digit-for-base-p (aref source scan-start) base)))
           do (incf scan-start))
+    (when (and (< scan-start length)
+               (identifier-part-p (aref source scan-start)))
+      (lex-error "Invalid number literal" index))
     (values (make-token :type :integer
                         :value (normalize-integer
                                 (parse-integer-token source digits-start scan-start base))
