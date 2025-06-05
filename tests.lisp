@@ -34,6 +34,16 @@
               actual-value
               ',form))))
 
+(defmacro signals (condition-type form)
+  "Assert that FORM signals CONDITION-TYPE."
+  `(progn
+     (incf *test-count*)
+     (handler-case
+         (progn
+           ,form
+           (error "Expected condition ~S" ',condition-type))
+       (,condition-type () t))))
+
 (defun test-runtime-values ()
   "Test the World Peace runtime value model."
   (is (valuep 0))
@@ -94,7 +104,9 @@
   (is-equal '(:spacer :until :minus :integer :pattern-arrow :eof)
             (token-types (lex-source "--- --> -1 <-")))
   (is-equal '(:pipe :logical-or :or-assign :eof)
-            (token-types (lex-source "| || |="))))
+            (token-types (lex-source "| || |=")))
+  (signals world-peace-lex-error
+    (lex-source "0o128")))
 
 (defun expression-sexp (expression)
   "Return a compact list representation of EXPRESSION for tests."
@@ -382,7 +394,13 @@
        end { 0 }"
       :output-stream output))
     (is-equal "Hi
-" (get-output-stream-string output))))
+" (get-output-stream-string output)))
+  (is-value-equal
+   20
+   (evaluate-source
+    "dec main():
+     --- num xs = [10, 20, 30];
+     end { xs(1) }")))
 
 (defun write-test-file (pathname contents)
   "Write CONTENTS to PATHNAME for tests."
