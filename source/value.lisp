@@ -215,19 +215,27 @@
 
 (defun value-less-p (left right)
   "Return true when LEFT is numerically less than RIGHT."
-  (< (value->integer left) (value->integer right)))
+  (and (typep left 'integer-value)
+       (typep right 'integer-value)
+       (< left right)))
 
 (defun value-less-equal-p (left right)
   "Return true when LEFT is numerically less than or equal to RIGHT."
-  (<= (value->integer left) (value->integer right)))
+  (and (typep left 'integer-value)
+       (typep right 'integer-value)
+       (<= left right)))
 
 (defun value-greater-p (left right)
   "Return true when LEFT is numerically greater than RIGHT."
-  (> (value->integer left) (value->integer right)))
+  (and (typep left 'integer-value)
+       (typep right 'integer-value)
+       (> left right)))
 
 (defun value-greater-equal-p (left right)
   "Return true when LEFT is numerically greater than or equal to RIGHT."
-  (>= (value->integer left) (value->integer right)))
+  (and (typep left 'integer-value)
+       (typep right 'integer-value)
+       (>= left right)))
 
 (defun value->exit-code (value)
   "Coerce VALUE to a process exit code."

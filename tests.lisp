@@ -65,6 +65,7 @@
   (is-value-equal 2 (value-shift-right 8 2))
   (is-value-equal 1 (boolean->value (value-less-p 2 3)))
   (is-value-equal 0 (boolean->value (value-greater-p 2 3)))
+  (is-value-equal 0 (boolean->value (value-less-p (make-array-value 2) 3)))
   (is-value-equal 2 (value-index (make-array-value 1 2 3) 1))
   (is (array-value-p (value-index (make-array-value 1) 7)))
   (is-value-equal (make-array-value 1 2 3)
