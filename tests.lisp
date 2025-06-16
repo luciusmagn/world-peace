@@ -401,7 +401,13 @@
    (evaluate-source
     "dec main():
      --- num xs = [10, 20, 30];
-     end { xs(1) }")))
+     end { xs(1) }"))
+  #+linux
+  (is-value-equal
+   1
+   (evaluate-source
+    "dec main():
+     end { syscall(39) > 0 }")))
 
 (defun write-test-file (pathname contents)
   "Write CONTENTS to PATHNAME for tests."

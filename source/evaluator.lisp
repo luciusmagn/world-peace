@@ -124,11 +124,55 @@
         (char-code character)
         (empty-array-value))))
 
+#+sbcl
+(defun current-errno ()
+  "Return the current libc errno."
+  (require :sb-posix)
+  (let ((symbol (find-symbol "GET-ERRNO" "SB-POSIX")))
+    (if symbol
+        (funcall symbol)
+        0)))
+
+#+sbcl
+(defun linux-syscall (arguments)
+  "Call libc syscall with ARGUMENTS."
+  (let ((numbers (loop for index below 7
+                       collect (if (< index (length arguments))
+                                   (value->integer (nth index arguments))
+                                   0))))
+    (apply #'sb-alien:alien-funcall
+           (sb-alien:extern-alien
+            "syscall"
+            (function sb-alien:long
+                      sb-alien:long
+                      sb-alien:long
+                      sb-alien:long
+                      sb-alien:long
+                      sb-alien:long
+                      sb-alien:long
+                      sb-alien:long))
+           numbers)))
+
 (defun builtin-syscall (runtime arguments)
-  "Stub syscall builtin."
-  (declare (ignore arguments))
-  (setf (runtime-errno runtime) 0)
-  0)
+  "Call a system syscall with ARGUMENTS."
+  (if (or (null arguments)
+          (> (length arguments) 7))
+      (progn
+        (setf (runtime-errno runtime) 22)
+        -1)
+      #+sbcl
+      (let ((result (linux-syscall arguments)))
+        (if (= result -1)
+            (progn
+              (setf (runtime-errno runtime) (current-errno))
+              -1)
+            (progn
+              (setf (runtime-errno runtime) 0)
+              (normalize-integer result))))
+      #-sbcl
+      (progn
+        (setf (runtime-errno runtime) 38)
+        -1)))
 
 (defun call-builtin (runtime name arguments)
   "Call builtin NAME with ARGUMENTS when it exists."
