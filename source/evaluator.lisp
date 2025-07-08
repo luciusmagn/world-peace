@@ -582,11 +582,13 @@
 
 (defun evaluate-program (program &key output-stream input-stream arguments)
   "Evaluate PROGRAM by invoking main."
-  (let ((runtime (make-runtime :output-stream (or output-stream *standard-output*)
-                               :input-stream  (or input-stream *standard-input*)
-                               :argv          (apply #'make-array-value
-                                                     (mapcar #'copy-value
-                                                             (or arguments '()))))))
+  (let* ((argument-values (when arguments
+                            (mapcar #'copy-value arguments)))
+         (runtime         (make-runtime
+                           :output-stream (or output-stream *standard-output*)
+                           :input-stream  (or input-stream *standard-input*)
+                           :argv          (apply #'make-array-value
+                                                 argument-values))))
     (register-program runtime program)
     (call-function-by-name runtime "main" '())))
 
