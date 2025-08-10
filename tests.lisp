@@ -345,6 +345,14 @@
             (program-sexp
              "dec forever():
               --- do { print(0); }
+              end"))
+  (is-equal '((:dec :down nil
+               ((:do :step (:assign :i :assign 3) -1 0 nil
+                 ((:expr (:call :print :i)))))
+               :end-empty))
+            (program-sexp
+             "dec down():
+              --- do i = 3 --> 0 by -1 { print(i); }
               end")))
 
 (defun test-evaluator ()

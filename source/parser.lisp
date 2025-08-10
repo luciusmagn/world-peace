@@ -524,11 +524,16 @@
        (when (match-token parser :by)
          (setf step (parse-loop-step parser)))
        (expect-token parser :until "Expected --> in do loop")
-       (make-do-statement :kind :step
-                          :assignment assignment
-                          :step step
-                          :goal (parse-expression parser)
-                          :body (parse-statement-block parser))))
+       (let ((goal (parse-expression parser)))
+         (when (match-token parser :by)
+           (when step
+             (parser-error parser "Loop step specified twice"))
+           (setf step (parse-loop-step parser)))
+         (make-do-statement :kind :step
+                            :assignment assignment
+                            :step step
+                            :goal goal
+                            :body (parse-statement-block parser)))))
     (t
      (make-do-statement :kind :while
                         :condition (parse-expression parser)
