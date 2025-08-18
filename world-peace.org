@@ -908,7 +908,7 @@ assignment:
     ;
 
 do_iter_clause:
-    assignment [ 'by' loop_step ] '-->' expr
+    assignment [ 'by' loop_step ] '-->' expr [ 'by' loop_step ]
     ;
 
 loop_step:
