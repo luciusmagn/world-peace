@@ -405,7 +405,9 @@
                             (if (<= current goal) 1 -1))))
         (unless (if (plusp direction)
                     (< current goal)
-                    (> current goal))
+                    (if (minusp step)
+                        (>= current goal)
+                        (> current goal)))
           (return))
         (evaluate-statements runtime environment (do-statement-body statement))
         (environment-set runtime

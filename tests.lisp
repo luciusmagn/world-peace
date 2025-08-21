@@ -410,6 +410,16 @@
     "dec main():
      --- num xs = [10, 20, 30];
      end { xs(1) }"))
+  (is-value-equal
+   321
+   (evaluate-source
+    "dec main():
+     --- num digits = [1, 2, 3];
+     --- num result = 0;
+     --- do i = len(digits) - 1 --> 0 by -1 {
+     ---   result = result * 10 + digits[i];
+     --- }
+     end { result }"))
   #+linux
   (is-value-equal
    1
