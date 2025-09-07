@@ -31,7 +31,7 @@
   `(
     (,(regexp-opt '("dec" "end" "ret" "do" "by" "case" "num" "load" "if" "else") 'words)
      . font-lock-keyword-face)
-    (,(regexp-opt '("<--" "<-" "+" "-" "*" "/" "%" "<<" ">>" "&" "^" "|" "==" "!=" "<" ">" "<=" ">=" "&&" "||" "=" "+=" "-=" "*=" "/=" "%=" "&=" "|=" "^=" "<<=" ">>=") t)
+    (,(regexp-opt '("-->" "<-" "+" "-" "*" "/" "%" "<<" ">>" "&" "^" "|" "==" "!=" "<" ">" "<=" ">=" "&&" "||" "=" "+=" "-=" "*=" "/=" "%=" "&=" "|=" "^=" "<<=" ">>=") t)
      . font-lock-builtin-face)
     ("\\b[0-9]+\\b" . font-lock-constant-face)
     ("\\b0[xX][0-9A-Fa-f_]+\\b" . font-lock-constant-face)
