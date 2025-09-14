@@ -619,7 +619,7 @@ These are the basic tokens. We separate into the following groups:
 - Operators
 - Dynamic: identifiers and numeric literals
 
-#+BEGIN_SRC lelwel :tangle src/peace.llw
+#+BEGIN_SRC text
 token Dec='dec'
       Ret='ret'
       End='end'
@@ -654,7 +654,7 @@ token Whitespace;
 ** Whitespace
 Despite its looks, World Peace is actually whitespace-insensitive:
 
-#+BEGIN_SRC lelwel :tangle src/peace.llw
+#+BEGIN_SRC text
 skip Whitespace;
 
 start file;
@@ -667,7 +667,7 @@ A source file is composed of zero or more items. An item is:
 - Global variable
 - Function definition
 
-#+BEGIN_SRC lelwel :tangle src/peace.llw
+#+BEGIN_SRC text
 file: item*;
 
 item:
@@ -681,7 +681,7 @@ item:
 ** Load statement
 A load statement is followed by either a Name, or a URL:
 
-#+BEGIN_SRC lelwel :tangle src/peace.llw
+#+BEGIN_SRC text
 load_stmt: 'load' source ';';
 
 source:
@@ -694,7 +694,7 @@ source:
 A variable is the =num= keyword followed by a Name, an equals sign, and an expression,
 finally being terminated by a semicolon.
 
-#+BEGIN_SRC lelwel :tangle src/peace.llw
+#+BEGIN_SRC text
 variable:
      'num' Name '=' expr ';'
      ;
@@ -704,7 +704,7 @@ variable:
 A function declaration consists of the =dec= keyword, a Name, argument list, a colon,
 function body and the =end= clause:
 
-#+BEGIN_SRC lelwel :tangle src/peace.llw
+#+BEGIN_SRC text
 function:
      'dec' Name param_list ':' body end_expr
      ;
@@ -743,7 +743,7 @@ end_body:
 ** Pattern-matching
 Naturally, since we got here, we need to tackle pattern matching:
 
-#+BEGIN_SRC lelwel :tangle src/peace.llw
+#+BEGIN_SRC text
 pattern_match:
     return_arm return_arm*
     ;
@@ -777,7 +777,7 @@ pattern_list: pattern (',' pattern)*;
 ** Expressions
 Expressions include arithmetic, logical, and comparison operations:
 
-#+BEGIN_SRC lelwel :tangle src/peace.llw
+#+BEGIN_SRC text
 expr:
     logical_or_expr
     ;
@@ -864,7 +864,7 @@ assignment_op:
 Statements include variable declarations, loops, if statements, case statements,
 assignments, function calls, and return statements:
 
-#+BEGIN_SRC lelwel :tangle src/peace.llw
+#+BEGIN_SRC text
 statement:
     variable
   | do_loop
