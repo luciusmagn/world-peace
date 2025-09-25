@@ -1,0 +1,25 @@
+load messages;
+
+dec sum(num values):
+--- num total = 0;
+---
+--- do i = 0 --> len(values) {
+---     total += values(i);
+--- }
+end {
+    total
+}
+
+dec main():
+--- num values = [1, 2];
+--- values.push(3);
+---
+--- print_banner();
+---
+--- case {
+---     sum(values) <- 6: print([111, 107, 10]),
+---     _: print([98, 97, 100, 10]),
+--- }
+end {
+    sum(values)
+}
