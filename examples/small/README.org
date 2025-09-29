@@ -3,12 +3,12 @@
 Run it from the repository root:
 
 #+BEGIN_SRC shell
-./peace run examples/small main.wp
+./peace run examples/small/main.wp
 #+END_SRC
 
 Compile it to a standalone SBCL image:
 
 #+BEGIN_SRC shell
-./peace compile examples/small main.wp -o /tmp/world-peace-small
+./peace compile examples/small/main.wp -o /tmp/world-peace-small
 /tmp/world-peace-small
 #+END_SRC
