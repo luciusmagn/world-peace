@@ -463,6 +463,29 @@
       (when (probe-file root)
         (uiop:delete-directory-tree root :validate t)))))
 
+(defun source-spec-list (arguments)
+  "Return source spec parsed from ARGUMENTS as a list."
+  (multiple-value-list (source-spec-from-arguments arguments)))
+
+(defun output-option-list (arguments)
+  "Return output option parsed from ARGUMENTS as a list."
+  (multiple-value-list (extract-output-option arguments)))
+
+(defun test-command-line-parser ()
+  "Test command-line argument normalization."
+  (is-equal '("examples/small/" "main.wp")
+            (source-spec-list '("examples/small/main.wp")))
+  (is-equal '("examples/small" "main.wp")
+            (source-spec-list '("examples/small" "main.wp")))
+  (is-equal '("/tmp/world-peace/" "main.wp")
+            (source-spec-list '("/tmp/world-peace/main.wp")))
+  (is-equal '("a.out" ("examples/small/main.wp"))
+            (output-option-list '("examples/small/main.wp" "-o" "a.out")))
+  (is-equal '("a.out" ("examples/small/main.wp"))
+            (output-option-list '("-o" "a.out" "examples/small/main.wp")))
+  (is-equal '(nil nil)
+            (output-option-list '("examples/small/main.wp" "-o"))))
+
 (defun run-tests ()
   "Run the World Peace test suite."
   (setf *test-count* 0)
@@ -473,4 +496,5 @@
   (test-file-parser)
   (test-evaluator)
   (test-module-loading)
+  (test-command-line-parser)
   (format t "~D assertions passed.~%" *test-count*))
