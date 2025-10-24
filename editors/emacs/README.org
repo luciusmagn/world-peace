@@ -1,0 +1,14 @@
+#+title: World Peace Emacs Mode
+
+Add this directory to your Emacs load path:
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'load-path "/path/to/world-peace/editors/emacs")
+(require 'world-peace-mode)
+#+END_SRC
+
+Files ending in =.wp= will open in =world-peace-mode=.
+
+Useful binding:
+
+- =C-c C-j= inserts a new function body line marker, =--- =.
