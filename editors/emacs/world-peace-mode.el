@@ -146,6 +146,22 @@
   (world-peace-indent-line)
   (end-of-line))
 
+(defun world-peace--continue-body-marker-p ()
+  "Return non-nil when the next line should start with a body marker."
+  (save-excursion
+    (back-to-indentation)
+    (or (looking-at-p "---")
+        (looking-at-p "dec\\_>.*:\\s-*$"))))
+
+(defun world-peace-newline-and-indent ()
+  "Insert a newline and continue body markers where appropriate."
+  (interactive)
+  (let ((continue-body-marker-p (world-peace--continue-body-marker-p)))
+    (newline)
+    (when continue-body-marker-p
+      (insert "--- "))
+    (world-peace-indent-line)))
+
 ;;;###autoload
 (define-derived-mode world-peace-mode prog-mode "World Peace"
   "Major mode for editing World Peace programming language code."
@@ -156,6 +172,8 @@
   (setq-local comment-start-skip "\\(//+\\|/\\*+\\)\\s *")
   (setq-local indent-line-function #'world-peace-indent-line)
   (setq-local imenu-generic-expression world-peace-imenu-generic-expression)
+  (define-key world-peace-mode-map (kbd "RET")
+              #'world-peace-newline-and-indent)
   (define-key world-peace-mode-map (kbd "C-c C-j")
               #'world-peace-insert-body-line))
 

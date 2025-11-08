@@ -9,6 +9,7 @@ Add this directory to your Emacs load path:
 
 Files ending in =.wp= will open in =world-peace-mode=.
 
-Useful binding:
+Useful behavior:
 
-- =C-c C-j= inserts a new function body line marker, =--- =.
+- Pressing =RET= after a =dec ...:= line or an existing =---= body line inserts the next =--- = marker automatically.
+- =C-c C-j= explicitly inserts a new function body line marker, =--- =.
