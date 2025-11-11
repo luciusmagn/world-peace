@@ -1,0 +1,9 @@
+// A function starts with dec, parameters are parenthesized, and each body line
+// starts with ---.
+dec main():
+--- // print writes bytes, so strings are spelled as arrays of ASCII numbers.
+--- print([104, 101, 108, 108, 111, 10]);
+end {
+    // The end clause is the function's final return value.
+    0
+}
