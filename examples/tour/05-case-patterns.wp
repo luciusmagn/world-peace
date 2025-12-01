@@ -1,0 +1,40 @@
+dec number_tag(num n):
+--- num tag = 0;
+--- case {
+---     n <- 0: tag = 48,
+---     n <- 1..9: tag = 49,
+---     _: tag = 63,
+--- }
+end {
+    tag
+}
+
+dec array_tag(num values):
+--- num tag = 0;
+--- case {
+---     values <- []: tag = 69,
+---     values <- [1, 2, ..]: tag = 83,
+---     values <- [.., 9]: tag = 57,
+---     _: tag = 63,
+--- }
+end {
+    tag
+}
+
+dec main():
+--- // The checks exercise literal, range, prefix-rest, suffix-rest, and
+--- // wildcard patterns.
+--- num good = number_tag(7) == 49;
+--- good = good && array_tag([1, 2, 3]) == 83;
+--- good = good && array_tag([4, 9]) == 57;
+--- good = good && array_tag([5]) == 63;
+---
+--- if good {
+---     print([99, 97, 115, 101, 32, 111, 107, 10]);
+--- } else {
+---     print([98, 97, 100, 10]);
+---     ret 1;
+--- }
+end {
+    0
+}

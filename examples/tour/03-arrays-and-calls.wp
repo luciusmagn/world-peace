@@ -1,0 +1,32 @@
+dec sum(num values):
+--- num total = 0;
+--- do i = 0 --> len(values) {
+---     total += values[i];
+--- }
+end {
+    total
+}
+
+dec main():
+--- num values = [1, 2];
+---
+--- // Method-call syntax supplies the receiver as the first argument. push/pop
+--- // also write the changed array back when the receiver is a plain name.
+--- values.push(3);
+--- values = push(values, 4);
+--- values.pop();
+---
+--- // Indexing can be written with brackets, or as a one-argument call on a
+--- // non-callable value.
+--- num first = values[0];
+--- num second = values(1);
+---
+--- if len(values) == 3 && first == 1 && second == 2 && sum(values) == 6 {
+---     print([97, 114, 114, 97, 121, 32, 111, 107, 10]);
+--- } else {
+---     print([98, 97, 100, 10]);
+---     ret 1;
+--- }
+end {
+    0
+}

@@ -1,0 +1,24 @@
+dec main():
+--- // Conditional do is a while loop.
+--- num count = 3;
+--- num factorial = 1;
+--- do count > 0 {
+---     factorial *= count;
+---     count -= 1;
+--- }
+---
+--- // Counted do loops move toward the goal. A negative step includes the goal.
+--- num countdown = 0;
+--- do i = 3 --> 1 by -1 {
+---     countdown = countdown * 10 + i;
+--- }
+---
+--- if factorial == 6 && countdown == 321 {
+---     print([108, 111, 111, 112, 115, 32, 111, 107, 10]);
+--- } else {
+---     print([98, 97, 100, 10]);
+---     ret 1;
+--- }
+end {
+    0
+}
