@@ -1,0 +1,40 @@
+// Parameter pattern filters give you tiny overload-like dispatch.
+dec fibonacci(num[=0] n):
+end {
+    0
+}
+
+dec fibonacci(num[=1] n):
+end {
+    1
+}
+
+dec fibonacci(num n):
+end {
+    fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+// Parameter slices bind only part of the argument. If the slice is out of
+// range, the parameter receives [].
+dec middle(num[1..2] values):
+end {
+    values
+}
+
+dec main():
+--- num pair = middle([8, 13, 21, 34]);
+--- num missing = middle([1]);
+---
+--- num good = fibonacci(10) == 55;
+--- good = good && len(pair) == 2 && pair[0] == 13 && pair[1] == 21;
+--- good = good && len(missing) == 0;
+---
+--- if good {
+---     print([112, 97, 114, 97, 109, 115, 32, 111, 107, 10]);
+--- } else {
+---     print([98, 97, 100, 10]);
+---     ret 1;
+--- }
+end {
+    0
+}

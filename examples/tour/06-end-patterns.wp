@@ -1,0 +1,30 @@
+dec fibonacci(num n):
+end {
+    n <- 0: 0,
+    n <- 1: 1,
+    _: fibonacci(n - 1) + fibonacci(n - 2),
+}
+
+dec edge_tag(num values):
+end {
+    values <- []: 0,
+    values <- [1, ..]: 1,
+    values <- [.., 9]: 9,
+    _: 2,
+}
+
+dec main():
+--- // end-clause arms are tested top to bottom, and the first match wins.
+--- num good = fibonacci(10) == 55;
+--- good = good && edge_tag([1, 2, 9]) == 1;
+--- good = good && edge_tag([4, 9]) == 9;
+---
+--- if good {
+---     print([101, 110, 100, 32, 111, 107, 10]);
+--- } else {
+---     print([98, 97, 100, 10]);
+---     ret 1;
+--- }
+end {
+    0
+}
