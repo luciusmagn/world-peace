@@ -1,0 +1,16 @@
+dec print_banner():
+--- print([108, 111, 97, 100, 115, 10]);
+end
+
+dec print_ok():
+--- print([111, 107, 10]);
+end
+
+dec print_bad():
+--- print([98, 97, 100, 10]);
+end
+
+dec triple(num n):
+end {
+    n * 3
+}

@@ -1,0 +1,14 @@
+load support;
+
+dec main():
+--- print_banner();
+---
+--- if triple(7) == 21 {
+---     print_ok();
+--- } else {
+---     print_bad();
+---     ret 1;
+--- }
+end {
+    0
+}
