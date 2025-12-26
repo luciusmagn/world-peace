@@ -1,0 +1,42 @@
+#+title: World Peace feature tour
+
+These examples are intentionally small and ordered by feature. Run each file
+from the repository root:
+
+#+BEGIN_SRC shell
+./peace run examples/tour/01-hello.wp
+./peace run examples/tour/02-expressions.wp
+./peace run examples/tour/03-arrays-and-calls.wp
+./peace run examples/tour/04-branches-and-loops.wp
+./peace run examples/tour/05-case-patterns.wp
+./peace run examples/tour/06-end-patterns.wp
+./peace run examples/tour/07-parameter-filters.wp
+./peace run examples/tour/08-loads/main.wp
+#+END_SRC
+
+Expected output:
+
+#+BEGIN_SRC text
+hello
+expr ok
+array ok
+loops ok
+case ok
+end ok
+params ok
+loads
+ok
+#+END_SRC
+
+The programs return exit code =0= when the demonstrated behavior worked.
+
+Files:
+
+- =01-hello.wp=: functions, body markers, byte-array printing, end returns.
+- =02-expressions.wp=: numeric literals, precedence, comparisons, logic, early return.
+- =03-arrays-and-calls.wp=: arrays, indexing, =len=, =push=, =pop=, method-call syntax.
+- =04-branches-and-loops.wp=: =if=, conditional =do= loops, counted =do= loops, compound assignment.
+- =05-case-patterns.wp=: statement-level =case= with literals, ranges, array patterns, and wildcard arms.
+- =06-end-patterns.wp=: return-value pattern matching in =end= clauses, recursion, first-match wins.
+- =07-parameter-filters.wp=: parameter pattern filters, overload-like dispatch, and parameter slices.
+- =08-loads/=: local module loading with =load support;=.

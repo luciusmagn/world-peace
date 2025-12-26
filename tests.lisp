@@ -463,6 +463,43 @@
       (when (probe-file root)
         (uiop:delete-directory-tree root :validate t)))))
 
+(defparameter *tour-example-outputs*
+  '(("examples/tour/01-hello.wp" . "hello
+")
+    ("examples/tour/02-expressions.wp" . "expr ok
+")
+    ("examples/tour/03-arrays-and-calls.wp" . "array ok
+")
+    ("examples/tour/04-branches-and-loops.wp" . "loops ok
+")
+    ("examples/tour/05-case-patterns.wp" . "case ok
+")
+    ("examples/tour/06-end-patterns.wp" . "end ok
+")
+    ("examples/tour/07-parameter-filters.wp" . "params ok
+")
+    ("examples/tour/08-loads/main.wp" . "loads
+ok
+"))
+  "Expected output for the feature tour examples.")
+
+(defun run-tour-example (path)
+  "Run tour example PATH and return its value and printed output."
+  (multiple-value-bind (source-root entrypoint)
+      (source-spec-from-arguments (list path))
+    (let ((output (make-string-output-stream)))
+      (values (evaluate-program (load-entry-program source-root entrypoint)
+                                :output-stream output)
+              (get-output-stream-string output)))))
+
+(defun test-tour-examples ()
+  "Test that every feature tour example still runs."
+  (dolist (example *tour-example-outputs*)
+    (multiple-value-bind (value output)
+        (run-tour-example (car example))
+      (is-value-equal 0 value)
+      (is-equal (cdr example) output))))
+
 (defun source-spec-list (arguments)
   "Return source spec parsed from ARGUMENTS as a list."
   (multiple-value-list (source-spec-from-arguments arguments)))
@@ -496,5 +533,6 @@
   (test-file-parser)
   (test-evaluator)
   (test-module-loading)
+  (test-tour-examples)
   (test-command-line-parser)
   (format t "~D assertions passed.~%" *test-count*))
