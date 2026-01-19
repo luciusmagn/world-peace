@@ -45,34 +45,39 @@
                  (push argument remaining)))
     (values output (nreverse remaining))))
 
-(defun main ()
-  "Run the World Peace command-line entry point."
-  (let ((arguments (uiop:command-line-arguments)))
-    (cond
-      ((or (null arguments)
-           (string= (first arguments) "repl"))
-       (run-repl))
-      ((string= (first arguments) "compile")
-       (multiple-value-bind (output source-arguments)
-           (extract-output-option (rest arguments))
-         (multiple-value-bind (source-root entrypoint)
-             (source-spec-from-arguments source-arguments)
-           (if (and output source-root entrypoint)
-               (run-compiler :source-root source-root
-                             :entrypoint entrypoint
-                             :output output)
-               (progn
-                 (usage *error-output*)
-                 (uiop:quit 64))))))
-      ((string= (first arguments) "run")
+(defun run-command (arguments)
+  "Run the World Peace command described by ARGUMENTS."
+  (cond
+    ((or (null arguments)
+         (string= (first arguments) "repl"))
+     (run-repl))
+    ((string= (first arguments) "compile")
+     (multiple-value-bind (output source-arguments)
+         (extract-output-option (rest arguments))
        (multiple-value-bind (source-root entrypoint)
-           (source-spec-from-arguments (rest arguments))
-         (if (and source-root entrypoint)
-             (run-source-program :source-root source-root
-                                 :entrypoint entrypoint)
+           (source-spec-from-arguments source-arguments)
+         (if (and output source-root entrypoint)
+             (run-compiler :source-root source-root
+                           :entrypoint entrypoint
+                           :output output)
              (progn
                (usage *error-output*)
-               (uiop:quit 64)))))
-      (t
-       (usage *error-output*)
-       (uiop:quit 64)))))
+               (uiop:quit 64))))))
+    ((string= (first arguments) "run")
+     (multiple-value-bind (source-root entrypoint)
+         (source-spec-from-arguments (rest arguments))
+       (if (and source-root entrypoint)
+           (run-source-program :source-root source-root
+                               :entrypoint entrypoint)
+           (progn
+             (usage *error-output*)
+             (uiop:quit 64)))))
+    (t
+     (usage *error-output*)
+     (uiop:quit 64))))
+
+(defun main ()
+  "Run the World Peace command-line entry point."
+  (call-with-interrupt-exit
+   (lambda ()
+     (run-command (uiop:command-line-arguments)))))

@@ -11,6 +11,16 @@
 (defvar *compiled-program* nil
   "Program embedded into a saved World Peace image.")
 
+(defun call-with-interrupt-exit (thunk)
+  "Call THUNK, exiting normally when SBCL receives C-c."
+  #+sbcl
+  (handler-case
+      (funcall thunk)
+    (sb-sys:interactive-interrupt ()
+      (uiop:quit 130)))
+  #-sbcl
+  (funcall thunk))
+
 (defun compiler-error (message)
   "Signal a compiler error with MESSAGE."
   (error 'compiler-error :message message))
@@ -140,9 +150,11 @@
 
 (defun compiled-main ()
   "Run the program embedded in the current image."
-  (unless *compiled-program*
-    (compiler-error "No World Peace program is embedded in this image"))
-  (run-program-main *compiled-program*))
+  (call-with-interrupt-exit
+   (lambda ()
+     (unless *compiled-program*
+       (compiler-error "No World Peace program is embedded in this image"))
+     (run-program-main *compiled-program*))))
 
 (defun run-compiler (&key source-root entrypoint output)
   "Compile ENTRYPOINT from SOURCE-ROOT and write OUTPUT."
