@@ -1,0 +1,79 @@
+#+title: World Peace
+
+World Peace is a tiny no-types language implemented on SBCL. The repository
+contains the interpreter, the image-dumping compiler, examples, and editor
+support.
+
+The language spec lives in =world-peace.org=.
+
+* Requirements
+
+- SBCL
+- POSIX shell for =check-lisp=
+- =curl= only if a program uses =load some.host/path/file.wp;=
+
+Quicklisp is not required. The system has no external Lisp dependencies; it
+only uses ASDF/UIOP, which are bundled with SBCL.
+
+* Build
+
+From the repository root:
+
+#+BEGIN_SRC shell
+sbcl --non-interactive \
+  --eval '(require :asdf)' \
+  --eval '(asdf:load-asd (merge-pathnames "world-peace.asd" (uiop:getcwd)))' \
+  --eval '(asdf:make :world-peace)'
+#+END_SRC
+
+This writes the =peace= executable into the repository root.
+
+* Run Programs
+
+Run a source file directly:
+
+#+BEGIN_SRC shell
+./peace run examples/tour/01-hello.wp
+#+END_SRC
+
+Run a source root plus entrypoint explicitly:
+
+#+BEGIN_SRC shell
+./peace run examples/tour/08-loads main.wp
+#+END_SRC
+
+Start the REPL:
+
+#+BEGIN_SRC shell
+./peace repl
+#+END_SRC
+
+* Compile Programs
+
+Dump a standalone SBCL image for a program:
+
+#+BEGIN_SRC shell
+./peace compile examples/tour/01-hello.wp -o /tmp/world-peace-hello
+/tmp/world-peace-hello
+#+END_SRC
+
+The two-argument source-root form also works:
+
+#+BEGIN_SRC shell
+./peace compile examples/tour/08-loads main.wp -o /tmp/world-peace-loads
+/tmp/world-peace-loads
+#+END_SRC
+
+* Test
+
+Run the Lisp test suite:
+
+#+BEGIN_SRC shell
+./check-lisp
+#+END_SRC
+
+The tests load the local ASDF system directly and do not use Quicklisp.
+
+* Examples
+
+The numbered feature tour starts at =examples/tour/README.org=.
