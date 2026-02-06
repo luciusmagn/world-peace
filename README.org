@@ -28,6 +28,59 @@ sbcl --non-interactive \
 
 This writes the =peace= executable into the repository root.
 
+* Nix
+
+Build the package from a checkout:
+
+#+BEGIN_SRC shell
+nix build .#world-peace
+./result/bin/peace run examples/tour/01-hello.wp
+#+END_SRC
+
+Run it without installing:
+
+#+BEGIN_SRC shell
+nix run .# -- run examples/tour/01-hello.wp
+nix run .# -- repl
+#+END_SRC
+
+Install it into your user profile from a checkout:
+
+#+BEGIN_SRC shell
+nix profile install .#world-peace
+peace repl
+#+END_SRC
+
+Install it directly from GitHub:
+
+#+BEGIN_SRC shell
+nix profile install github:luciusmagn/world-peace#world-peace
+peace repl
+#+END_SRC
+
+The installed package includes the =peace= executable, the spec under
+=share/doc/world-peace/=, and the examples under =share/world-peace/examples/=.
+For example:
+
+#+BEGIN_SRC shell
+peace run ~/.nix-profile/share/world-peace/examples/tour/01-hello.wp
+#+END_SRC
+
+For development, enter a shell with SBCL and curl available:
+
+#+BEGIN_SRC shell
+nix develop
+./check-lisp
+#+END_SRC
+
+If your Nix installation has flakes disabled, add:
+
+#+BEGIN_SRC shell
+--extra-experimental-features 'nix-command flakes'
+#+END_SRC
+
+to the =nix= commands above.
+
 * Run Programs
 
 Run a source file directly:
