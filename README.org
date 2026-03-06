@@ -59,8 +59,8 @@ peace repl
 #+END_SRC
 
 The installed package includes the =peace= executable, the spec under
-=share/doc/world-peace/=, and the examples under =share/world-peace/examples/=.
-For example:
+=share/doc/world-peace/=, examples under =share/world-peace/examples/=, and
+editor support under =share/world-peace/editors/=. For example:
 
 #+BEGIN_SRC shell
 peace run ~/.nix-profile/share/world-peace/examples/tour/01-hello.wp
@@ -71,6 +71,14 @@ For development, enter a shell with SBCL and curl available:
 #+BEGIN_SRC shell
 nix develop
 ./check-lisp
+#+END_SRC
+
+The flake also exposes the Neovim runtime as a plugin package:
+
+#+BEGIN_SRC nix
+programs.neovim.plugins = [
+  inputs.world-peace.packages.${pkgs.system}.world-peace-neovim
+];
 #+END_SRC
 
 If your Nix installation has flakes disabled, add:
@@ -126,6 +134,34 @@ Run the Lisp test suite:
 #+END_SRC
 
 The tests load the local ASDF system directly and do not use Quicklisp.
+
+* Editor Support
+
+Emacs support lives in =editors/emacs=. Add that directory to =load-path= and
+=require= =world-peace-mode=.
+
+Neovim support lives in =editors/neovim=. From a checkout, add it to your
+runtime path:
+
+#+BEGIN_SRC lua
+vim.opt.runtimepath:prepend("/path/to/world-peace/editors/neovim")
+#+END_SRC
+
+Or, with Vimscript:
+
+#+BEGIN_SRC vim
+set runtimepath^=/path/to/world-peace/editors/neovim
+#+END_SRC
+
+With a Nix profile install, the runtime is available here:
+
+#+BEGIN_SRC lua
+vim.opt.runtimepath:prepend(vim.fn.expand("~/.nix-profile/share/world-peace/editors/neovim"))
+#+END_SRC
+
+The Neovim runtime provides =*.wp= filetype detection, syntax highlighting,
+comment settings, indentation, and insert-mode =<CR>= continuation for =--- =
+body lines.
 
 * Examples
 

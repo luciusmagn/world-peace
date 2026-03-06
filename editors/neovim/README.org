@@ -1,0 +1,47 @@
+#+title: World Peace Neovim Runtime
+
+This directory is a Vim/Neovim runtime plugin for World Peace source files.
+
+It provides:
+
+- =*.wp= filetype detection.
+- Syntax highlighting.
+- Comment settings for =//= and =/* */= comments.
+- Basic indentation.
+- Insert-mode =<CR>= continuation for function body marker lines.
+
+* Local Checkout
+
+With Lua config:
+
+#+BEGIN_SRC lua
+vim.opt.runtimepath:prepend("/path/to/world-peace/editors/neovim")
+#+END_SRC
+
+With Vimscript config:
+
+#+BEGIN_SRC vim
+set runtimepath^=/path/to/world-peace/editors/neovim
+#+END_SRC
+
+With =lazy.nvim= from a local checkout:
+
+#+BEGIN_SRC lua
+{
+  dir = "/path/to/world-peace/editors/neovim",
+  ft = "worldpeace",
+}
+#+END_SRC
+
+* Nix
+
+The flake exposes the runtime as =world-peace-neovim=. In Home Manager:
+
+#+BEGIN_SRC nix
+programs.neovim.plugins = [
+  inputs.world-peace.packages.${pkgs.system}.world-peace-neovim
+];
+#+END_SRC
+
+The main =world-peace= package also installs these files under
+=share/world-peace/editors/neovim=.
