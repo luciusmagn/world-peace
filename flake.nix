@@ -26,6 +26,19 @@
         rec {
           default = world-peace;
 
+          world-peace-neovim = pkgs.vimUtils.buildVimPlugin {
+            pname = "world-peace-neovim";
+            version = "0.1.0";
+            src = ./editors/neovim;
+
+            meta = {
+              description = "Neovim runtime files for World Peace";
+              homepage = "https://github.com/luciusmagn/world-peace";
+              license = pkgs.lib.licenses.mit;
+              platforms = pkgs.lib.platforms.unix;
+            };
+          };
+
           world-peace = pkgs.stdenvNoCC.mkDerivation {
             pname = "world-peace";
             version = "0.1.0";
@@ -72,6 +85,8 @@
               install -Dm644 world-peace.org "$out/share/doc/world-peace/world-peace.org"
               mkdir -p "$out/share/world-peace/examples"
               cp -R examples/* "$out/share/world-peace/examples/"
+              mkdir -p "$out/share/world-peace/editors"
+              cp -R editors/* "$out/share/world-peace/editors/"
 
               runHook postInstall
             '';
