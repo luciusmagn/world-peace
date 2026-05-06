@@ -125,6 +125,26 @@ The two-argument source-root form also works:
 /tmp/world-peace-loads
 #+END_SRC
 
+* Syscall Buffers
+
+=syscall= accepts numbers, arrays, and byte buffers. Numbers are passed as
+integer syscall arguments. Arrays are copied into temporary byte buffers for the
+duration of the call. =bytes(n)= creates a mutable byte buffer that is passed as
+its native pointer, and kernel writes are visible afterward.
+
+Useful builtins:
+
+- =bytes(n)= creates a zero-filled mutable byte buffer.
+- =poke(buffer, index, value)= writes one byte.
+- =addr(buffer)= returns the native pointer as a number, for explicit pointer
+  nonsense. Keep the buffer value alive while using this number.
+
+Linux/x86-64 example:
+
+#+BEGIN_SRC shell
+./peace run examples/linux/syscall-buffer.wp
+#+END_SRC
+
 * Test
 
 Run the Lisp test suite:
