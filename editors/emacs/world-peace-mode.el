@@ -46,7 +46,7 @@
                     "if" "else")
                   'words)
      . font-lock-keyword-face)
-    (,(regexp-opt '("len" "push" "pop" "print" "read" "syscall"
+    (,(regexp-opt '("len" "push" "pop" "print" "read" "bytes" "poke" "addr" "syscall"
                     "errno" "argv")
                   'words)
      . font-lock-builtin-face)
