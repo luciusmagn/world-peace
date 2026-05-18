@@ -7,7 +7,7 @@ endif
 syntax case match
 
 syntax keyword worldpeaceKeyword dec end ret do by case num load if else
-syntax keyword worldpeaceBuiltin len push pop print read syscall errno argv
+syntax keyword worldpeaceBuiltin len push pop print read bytes poke addr syscall errno argv
 
 syntax match worldpeaceFunction "\<dec\>\s\+\zs[A-Za-z_][A-Za-z0-9_]*"
 syntax match worldpeaceVariable "\<num\>\s*\%(\[[^]\n]*\]\s*\)\?\zs[A-Za-z_][A-Za-z0-9_]*"

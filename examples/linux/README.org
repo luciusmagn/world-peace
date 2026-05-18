@@ -1,0 +1,10 @@
+#+title: Linux syscall examples
+
+These examples use raw Linux syscall numbers as currently written for x86-64
+Linux.
+
+Run from the repository root:
+
+#+BEGIN_SRC shell
+./peace run examples/linux/syscall-buffer.wp
+#+END_SRC
