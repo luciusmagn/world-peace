@@ -39,7 +39,13 @@
     (array-value
      (apply #'make-array-value
             (loop for element across (array-value-elements value)
-                  collect (copy-value element))))))
+                  collect (copy-value element))))
+    (byte-buffer-value
+     (let ((copy (make-byte-buffer-value (byte-buffer-value-length value))))
+       (loop for index below (byte-buffer-value-length value)
+             do (setf (byte-buffer-ref copy index)
+                      (byte-buffer-ref value index)))
+       copy))))
 
 (defun environment-define (environment name value)
   "Bind NAME to VALUE in ENVIRONMENT."
@@ -109,7 +115,10 @@
      (write-char (code-char (ldb (byte 8 0) value)) stream))
     (array-value
      (loop for element across (array-value-elements value)
-           do (byte-value-write element stream)))))
+           do (byte-value-write element stream)))
+    (byte-buffer-value
+     (loop for index below (byte-buffer-value-length value)
+           do (byte-value-write (byte-buffer-ref value index) stream)))))
 
 (defun builtin-print (runtime arguments)
   "Write ARGUMENTS to the runtime output stream."
@@ -124,6 +133,33 @@
         (char-code character)
         (empty-array-value))))
 
+(defun builtin-bytes (arguments)
+  "Return a mutable byte buffer."
+  (make-byte-buffer-value
+   (if arguments
+       (value->integer (first arguments))
+       0)))
+
+(defun builtin-poke (arguments)
+  "Set one byte in a mutable byte buffer."
+  (let ((buffer (first arguments)))
+    (when (and (byte-buffer-value-p buffer)
+               (second arguments)
+               (third arguments))
+      (let ((index (value->integer (second arguments))))
+        (when (and (not (minusp index))
+                   (< index (byte-buffer-value-length buffer)))
+          (setf (byte-buffer-ref buffer index)
+                (value-octet (third arguments))))))
+    (or buffer (empty-array-value))))
+
+(defun builtin-addr (arguments)
+  "Return a byte buffer's native address."
+  (let ((value (first arguments)))
+    (if (byte-buffer-value-p value)
+        (byte-buffer-address value)
+        0)))
+
 #+sbcl
 (defun current-errno ()
   "Return the current libc errno."
@@ -134,24 +170,66 @@
         0)))
 
 #+sbcl
+(defun array-value->alien-bytes (value)
+  "Return a native byte buffer containing VALUE's bytes."
+  (let* ((elements (array-value-elements value))
+         (length   (length elements))
+         (pointer  (and (plusp length)
+                        (sb-alien:make-alien sb-alien:unsigned-char length))))
+    (loop for index below length
+          do (setf (sb-alien:deref pointer index)
+                   (value-octet (aref elements index))))
+    (values pointer length)))
+
+#+sbcl
+(defun alien-address (pointer)
+  "Return POINTER's integer address."
+  (if pointer
+      (normalize-integer (sb-sys:sap-int (sb-alien:alien-sap pointer)))
+      0))
+
+#+sbcl
+(defun syscall-argument-integer (argument)
+  "Return ARGUMENT as a native syscall integer and optional temporary pointer."
+  (etypecase argument
+    (integer-value
+     (values argument nil))
+    (byte-buffer-value
+     (values (byte-buffer-address argument) nil))
+    (array-value
+     (multiple-value-bind (pointer length)
+         (array-value->alien-bytes argument)
+       (declare (ignore length))
+       (values (alien-address pointer) pointer)))))
+
+#+sbcl
 (defun linux-syscall (arguments)
   "Call libc syscall with ARGUMENTS."
-  (let ((numbers (loop for index below 7
-                       collect (if (< index (length arguments))
-                                   (value->integer (nth index arguments))
-                                   0))))
-    (apply #'sb-alien:alien-funcall
-           (sb-alien:extern-alien
-            "syscall"
-            (function sb-alien:long
-                      sb-alien:long
-                      sb-alien:long
-                      sb-alien:long
-                      sb-alien:long
-                      sb-alien:long
-                      sb-alien:long
-                      sb-alien:long))
-           numbers)))
+  (let ((temporaries '()))
+    (unwind-protect
+         (let ((numbers (loop for index below 7
+                              collect (if (< index (length arguments))
+                                          (multiple-value-bind (number pointer)
+                                              (syscall-argument-integer
+                                               (nth index arguments))
+                                            (when pointer
+                                              (push pointer temporaries))
+                                            number)
+                                          0))))
+           (apply #'sb-alien:alien-funcall
+                  (sb-alien:extern-alien
+                   "syscall"
+                   (function sb-alien:long
+                             sb-alien:long
+                             sb-alien:long
+                             sb-alien:long
+                             sb-alien:long
+                             sb-alien:long
+                             sb-alien:long
+                             sb-alien:long))
+                  numbers))
+      (dolist (pointer temporaries)
+        (sb-alien:free-alien pointer)))))
 
 (defun builtin-syscall (runtime arguments)
   "Call a system syscall with ARGUMENTS."
@@ -187,13 +265,21 @@
      (builtin-print runtime arguments))
     ((string= name "read")
      (builtin-read runtime arguments))
+    ((string= name "bytes")
+     (builtin-bytes arguments))
+    ((string= name "poke")
+     (builtin-poke arguments))
+    ((string= name "addr")
+     (builtin-addr arguments))
     ((string= name "syscall")
      (builtin-syscall runtime arguments))
     (t nil)))
 
 (defun builtin-name-p (name)
   "Return true when NAME is a builtin function."
-  (member name '("len" "push" "pop" "print" "read" "syscall") :test #'string=))
+  (member name '("len" "push" "pop" "print" "read" "bytes" "poke" "addr"
+                 "syscall")
+          :test #'string=))
 
 (defun runtime-function-bound-p (runtime name)
   "Return true when RUNTIME has a function named NAME."

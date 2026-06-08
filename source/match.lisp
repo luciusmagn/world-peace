@@ -19,9 +19,9 @@
 
 (defun match-array-pattern-p (pattern value environment)
   "Return true when array PATTERN matches VALUE."
-  (and (array-value-p value)
+  (and (sequence-value-elements value)
        (let* ((patterns   (array-pattern-elements pattern))
-              (values     (array-value-elements value))
+              (values     (sequence-value-elements value))
               (rest-index (rest-pattern-index patterns)))
          (cond
            ((null rest-index)
