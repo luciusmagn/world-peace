@@ -515,7 +515,32 @@ apart from the API available on
 
 Calls a syscall with a given number and given parameters.
 
-Return: 0 on success, -1 on failure. On failure, errno is set
+Arguments may be numbers, arrays, or byte buffers. Arrays are copied into a
+temporary native byte buffer for the duration of the syscall. Byte buffers are
+passed as their native pointer, so writes made by the kernel are visible
+afterward.
+
+Return: the syscall return value, or -1 on failure. On failure, errno is set
+
+** bytes(num size)
+
+Returns a zero-filled mutable byte buffer of =size= bytes.
+
+Byte buffers are array-like for =len=, indexing, =print=, equality, and pattern
+matching. Unlike array literals, syscall receives a byte buffer as its stable
+native pointer.
+
+** poke(num buffer, num index, num value)
+
+Writes the low byte of =value= into =buffer[index]= and returns =buffer=.
+Out-of-range writes do nothing.
+
+** addr(num buffer)
+
+Returns the native pointer for a byte buffer as a number.
+
+This is intentionally sharp. The pointer is only meaningful while the byte
+buffer remains alive.
 
 ** errno
 

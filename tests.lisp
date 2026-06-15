@@ -48,9 +48,18 @@
   "Test the World Peace runtime value model."
   (is (valuep 0))
   (is (valuep (make-array-value 1 2 3)))
+  (is (valuep (make-byte-buffer-value 3)))
   (is (not (value-equal-p 0 (make-array-value 0))))
   (is (value-equal-p (make-array-value 1 (make-array-value 2))
                      (make-array-value 1 (make-array-value 2))))
+  (let ((buffer (make-byte-buffer-value 3)))
+    (setf (byte-buffer-ref buffer 0) 1
+          (byte-buffer-ref buffer 1) 2
+          (byte-buffer-ref buffer 2) 3)
+    (is (value-equal-p buffer (make-array-value 1 2 3)))
+    (is-value-equal 2 (value-index buffer 1))
+    (is-equal 3 (value-length buffer))
+    (is-equal 1 (value->integer buffer)))
   (is-equal 5 (value->integer (make-array-value 5 6)))
   (is-equal 0 (value->integer (empty-array-value)))
   (is (not (value-truthy-p 0)))
@@ -404,6 +413,23 @@
       :output-stream output))
     (is-equal "Hi
 " (get-output-stream-string output)))
+  (let ((output (make-string-output-stream)))
+    (is-value-equal
+     1
+     (evaluate-source
+      "dec main():
+       --- num buffer = bytes(3);
+       --- poke(buffer, 0, 79);
+       --- poke(buffer, 1, 75);
+       --- poke(buffer, 2, 10);
+       --- print(buffer);
+       end {
+         buffer <- [79, 75, 10]: len(buffer) == 3 && addr(buffer) != 0,
+              _: 0,
+       }"
+      :output-stream output))
+    (is-equal "OK
+" (get-output-stream-string output)))
   (is-value-equal
    20
    (evaluate-source
@@ -425,7 +451,15 @@
    1
    (evaluate-source
     "dec main():
-     end { syscall(39) > 0 }")))
+     end { syscall(39) > 0 }"))
+  #+linux
+  (is-value-equal
+   1
+   (evaluate-source
+    "dec main():
+     --- num buffer = bytes(256);
+     --- num count = syscall(79, buffer, len(buffer));
+     end { count > 0 && buffer[0] == 47 }")))
 
 (defun write-test-file (pathname contents)
   "Write CONTENTS to PATHNAME for tests."

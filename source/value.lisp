@@ -20,9 +20,15 @@
   "A World Peace array value."
   (elements #() :type simple-vector))
 
+(defstruct (byte-buffer-value
+            (:constructor %make-byte-buffer-value (storage length)))
+  "A mutable byte buffer value."
+  storage
+  (length 0 :type fixnum))
+
 (deftype value ()
   "A World Peace value."
-  '(or integer-value array-value))
+  '(or integer-value array-value byte-buffer-value))
 
 (defun normalize-integer (integer)
   "Return INTEGER wrapped into the World Peace signed 64-bit range."
@@ -34,7 +40,85 @@
 (defun valuep (value)
   "Return true when VALUE is a World Peace value."
   (or (typep value 'integer-value)
-      (array-value-p value)))
+      (array-value-p value)
+      (byte-buffer-value-p value)))
+
+(defun value-octet (value)
+  "Return VALUE coerced to one unsigned byte."
+  (ldb (byte 8 0) (value->integer value)))
+
+(defun byte-buffer-storage-ref (storage index)
+  "Return byte INDEX from STORAGE."
+  #+sbcl
+  (sb-alien:deref storage index)
+  #-sbcl
+  (aref storage index))
+
+(defun (setf byte-buffer-storage-ref) (value storage index)
+  "Set byte INDEX in STORAGE to VALUE."
+  #+sbcl
+  (setf (sb-alien:deref storage index) value)
+  #-sbcl
+  (setf (aref storage index) value))
+
+(defun byte-buffer-ref (buffer index)
+  "Return byte INDEX from BUFFER."
+  (byte-buffer-storage-ref (byte-buffer-value-storage buffer) index))
+
+(defun (setf byte-buffer-ref) (value buffer index)
+  "Set byte INDEX in BUFFER to VALUE."
+  (setf (byte-buffer-storage-ref (byte-buffer-value-storage buffer) index)
+        value))
+
+(defun make-byte-buffer-value (length &key (initial-element 0))
+  "Return a mutable byte buffer of LENGTH bytes."
+  (let* ((size    (max 0 length))
+         (initial (ldb (byte 8 0) initial-element))
+         (storage #+sbcl
+                  (and (plusp size)
+                       (sb-alien:make-alien sb-alien:unsigned-char size))
+                  #-sbcl
+                  (make-array size
+                              :element-type '(unsigned-byte 8)
+                              :initial-element initial))
+         (buffer  (%make-byte-buffer-value storage size)))
+    #+sbcl
+    (progn
+      (loop for index below size
+            do (setf (byte-buffer-storage-ref storage index) initial))
+      (when storage
+        (sb-ext:finalize buffer
+                         (lambda ()
+                           (sb-alien:free-alien storage))
+                         :dont-save t)))
+    buffer))
+
+(defun byte-buffer-address (buffer)
+  "Return BUFFER's native pointer address as a World Peace integer."
+  #+sbcl
+  (if (byte-buffer-value-storage buffer)
+      (normalize-integer
+       (sb-sys:sap-int
+        (sb-alien:alien-sap (byte-buffer-value-storage buffer))))
+      0)
+  #-sbcl
+  0)
+
+(defun byte-buffer-elements (buffer)
+  "Return BUFFER bytes as a vector of World Peace integers."
+  (let ((elements (make-array (byte-buffer-value-length buffer))))
+    (loop for index below (length elements)
+          do (setf (aref elements index) (byte-buffer-ref buffer index)))
+    elements))
+
+(defun sequence-value-elements (value)
+  "Return VALUE's elements when it is array-like."
+  (cond
+    ((array-value-p value)
+     (array-value-elements value))
+    ((byte-buffer-value-p value)
+     (byte-buffer-elements value))
+    (t nil)))
 
 (defun make-array-value (&rest values)
   "Return a World Peace array containing VALUES."
@@ -48,8 +132,8 @@
   "Coerce VALUE to an integer for arithmetic."
   (etypecase value
     (integer-value value)
-    (array-value
-     (let ((elements (array-value-elements value)))
+    ((or array-value byte-buffer-value)
+     (let ((elements (sequence-value-elements value)))
        (if (zerop (length elements))
            0
            (value->integer (aref elements 0)))))))
@@ -60,10 +144,10 @@
     ((and (typep left 'integer-value)
           (typep right 'integer-value))
      (= left right))
-    ((and (array-value-p left)
-          (array-value-p right))
-     (let ((left-elements  (array-value-elements left))
-           (right-elements (array-value-elements right)))
+    ((and (sequence-value-elements left)
+          (sequence-value-elements right))
+     (let ((left-elements  (sequence-value-elements left))
+           (right-elements (sequence-value-elements right)))
        (and (= (length left-elements)
                (length right-elements))
             (loop for index below (length left-elements)
@@ -73,8 +157,8 @@
 
 (defun value-false-ascii-p (value)
   "Return true when VALUE is the byte array spelling false."
-  (and (array-value-p value)
-       (let ((elements (array-value-elements value)))
+  (and (sequence-value-elements value)
+       (let ((elements (sequence-value-elements value)))
          (and (= (length elements) 5)
               (= (aref elements 0) #x66)
               (= (aref elements 1) #x61)
@@ -84,8 +168,8 @@
 
 (defun value-zero-array-p (value)
   "Return true when VALUE is an array containing only numeric zero values."
-  (and (array-value-p value)
-       (let ((elements (array-value-elements value)))
+  (and (sequence-value-elements value)
+       (let ((elements (sequence-value-elements value)))
          (and (plusp (length elements))
               (loop for index below (length elements)
                     always (let ((element (aref elements index)))
@@ -98,8 +182,8 @@
   (cond
     ((typep value 'integer-value)
      (not (zerop value)))
-    ((array-value-p value)
-     (let ((elements (array-value-elements value)))
+    ((sequence-value-elements value)
+     (let ((elements (sequence-value-elements value)))
        (not (or (zerop (length elements))
                 (value-false-ascii-p value)
                 (value-zero-array-p value)))))
@@ -124,6 +208,10 @@
          (if (< integer-index (length elements))
              (aref elements integer-index)
              (empty-array-value))))
+      ((byte-buffer-value-p value)
+       (if (< integer-index (byte-buffer-value-length value))
+           (byte-buffer-ref value integer-index)
+           (empty-array-value)))
       (t
        (empty-array-value)))))
 
@@ -131,12 +219,12 @@
   "Return the length of VALUE as a World Peace integer."
   (etypecase value
     (integer-value 1)
-    (array-value (length (array-value-elements value)))))
+    (array-value (length (array-value-elements value)))
+    (byte-buffer-value (byte-buffer-value-length value))))
 
 (defun value-push (array element)
   "Return ARRAY with ELEMENT appended."
-  (let* ((old-elements (if (array-value-p array)
-                           (array-value-elements array)
+  (let* ((old-elements (or (sequence-value-elements array)
                            (vector array)))
          (old-length   (length old-elements))
          (new-elements (make-array (1+ old-length))))
@@ -146,8 +234,7 @@
 
 (defun value-pop (array)
   "Return ARRAY without its last element."
-  (let ((old-elements (if (array-value-p array)
-                          (array-value-elements array)
+  (let ((old-elements (or (sequence-value-elements array)
                           (vector array))))
     (if (zerop (length old-elements))
         (empty-array-value)
@@ -245,7 +332,11 @@
                     (let ((elements (array-value-elements value)))
                       (if (zerop (length elements))
                           0
-                          (value->integer (aref elements 0))))))))
+                          (value->integer (aref elements 0)))))
+                   (byte-buffer-value
+                    (if (zerop (byte-buffer-value-length value))
+                        0
+                        (byte-buffer-ref value 0))))))
     (ldb (byte 8 0) integer)))
 
 (defun string->byte-array (string)
@@ -259,11 +350,12 @@
   (etypecase value
     (integer-value
      (format stream "~D" value))
-    (array-value
+    ((or array-value byte-buffer-value)
      (write-char #\[ stream)
-     (loop for index below (length (array-value-elements value))
+     (loop with elements = (sequence-value-elements value)
+           for index below (length elements)
            do (when (plusp index)
                 (format stream ", "))
-              (write-value-readable (aref (array-value-elements value) index)
+              (write-value-readable (aref elements index)
                                     stream))
      (write-char #\] stream))))
