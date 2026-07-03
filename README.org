@@ -4,7 +4,7 @@ World Peace is a tiny no-types language implemented on SBCL. The repository
 contains the interpreter, the image-dumping compiler, examples, and editor
 support.
 
-The language spec lives in =world-peace.org=.
+The language spec lives in [[file:world-peace.org][world-peace.org]].
 
 * Requirements
 
