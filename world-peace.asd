@@ -1,7 +1,7 @@
 (asdf:defsystem #:world-peace
   :description "World Peace language compiler and REPL."
   :author "Lukáš Hozda"
-  :license "MIT"
+  :license "COLL-Attribution"
   :version "0.1.0"
   :serial t
   :depends-on ()
