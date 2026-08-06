@@ -446,20 +446,25 @@
      ---   result = result * 10 + digits[i];
      --- }
      end { result }"))
-  #+linux
-  (is-value-equal
-   1
-   (evaluate-source
-    "dec main():
-     end { syscall(39) > 0 }"))
-  #+linux
-  (is-value-equal
-   1
-   (evaluate-source
-    "dec main():
-     --- num buffer = bytes(256);
-     --- num count = syscall(79, buffer, len(buffer));
-     end { count > 0 && buffer[0] == 47 }")))
+  (when (native-linux-syscall-supported-p)
+    (is-value-equal
+     1
+     (evaluate-source
+      "dec main():
+       end { syscall(39) > 0 }"))
+    (is-value-equal
+     1
+     (evaluate-source
+      "dec main():
+       --- num buffer = bytes(256);
+       --- num count = syscall(79, buffer, len(buffer));
+       end { count > 0 && buffer[0] == 47 }"))
+    (is-value-equal
+     1
+     (evaluate-source
+      "dec main():
+       --- num result = syscall(999999);
+       end { result == -1 && errno == 38 }"))))
 
 (defun write-test-file (pathname contents)
   "Write CONTENTS to PATHNAME for tests."

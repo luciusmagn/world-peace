@@ -3,6 +3,8 @@ set -eu
 
 sbcl --non-interactive \
   --eval '(require :asdf)' \
+  --eval '(let ((setup (merge-pathnames "quicklisp/setup.lisp" (user-homedir-pathname)))) (when (probe-file setup) (load setup)))' \
+  --eval '(when (find-package :ql) (uiop:symbol-call :ql :quickload (list :cffi :trivial-garbage) :silent t))' \
   --eval '(asdf:load-asd (merge-pathnames "world-peace.asd" (uiop:getcwd)))' \
   --eval '(asdf:load-system :world-peace)' \
   --eval '(load "tests.lisp")' \

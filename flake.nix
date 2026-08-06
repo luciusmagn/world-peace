@@ -6,6 +6,12 @@
   outputs =
     { self, nixpkgs }:
     let
+      collAttributionLicense = {
+        shortName = "COLL-Attribution";
+        fullName = "Configurable Open Lisp License - Attribution";
+        free = true;
+      };
+
       systems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -34,7 +40,7 @@
             meta = {
               description = "Neovim runtime files for World Peace";
               homepage = "https://github.com/luciusmagn/world-peace";
-              license = pkgs.lib.licenses.mit;
+              license = collAttributionLicense;
               platforms = pkgs.lib.platforms.unix;
             };
           };
@@ -47,7 +53,10 @@
 
             nativeBuildInputs = [
               pkgs.makeWrapper
-              pkgs.sbcl
+              (pkgs.sbcl.withPackages (ps: [
+                ps.cffi
+                ps.trivial-garbage
+              ]))
             ];
 
             buildPhase = ''
@@ -92,9 +101,9 @@
             '';
 
             meta = {
-              description = "Tiny no-types language implemented on SBCL";
+              description = "Tiny no-types language implemented in Common Lisp";
               homepage = "https://github.com/luciusmagn/world-peace";
-              license = pkgs.lib.licenses.mit;
+              license = collAttributionLicense;
               mainProgram = "peace";
               platforms = pkgs.lib.platforms.unix;
             };
@@ -127,7 +136,10 @@
           default = pkgs.mkShell {
             packages = [
               pkgs.curl
-              pkgs.sbcl
+              (pkgs.sbcl.withPackages (ps: [
+                ps.cffi
+                ps.trivial-garbage
+              ]))
             ];
           };
         }

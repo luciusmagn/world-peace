@@ -160,77 +160,6 @@
         (byte-buffer-address value)
         0)))
 
-#+sbcl
-(defun current-errno ()
-  "Return the current libc errno."
-  (require :sb-posix)
-  (let ((symbol (find-symbol "GET-ERRNO" "SB-POSIX")))
-    (if symbol
-        (funcall symbol)
-        0)))
-
-#+sbcl
-(defun array-value->alien-bytes (value)
-  "Return a native byte buffer containing VALUE's bytes."
-  (let* ((elements (array-value-elements value))
-         (length   (length elements))
-         (pointer  (and (plusp length)
-                        (sb-alien:make-alien sb-alien:unsigned-char length))))
-    (loop for index below length
-          do (setf (sb-alien:deref pointer index)
-                   (value-octet (aref elements index))))
-    (values pointer length)))
-
-#+sbcl
-(defun alien-address (pointer)
-  "Return POINTER's integer address."
-  (if pointer
-      (normalize-integer (sb-sys:sap-int (sb-alien:alien-sap pointer)))
-      0))
-
-#+sbcl
-(defun syscall-argument-integer (argument)
-  "Return ARGUMENT as a native syscall integer and optional temporary pointer."
-  (etypecase argument
-    (integer-value
-     (values argument nil))
-    (byte-buffer-value
-     (values (byte-buffer-address argument) nil))
-    (array-value
-     (multiple-value-bind (pointer length)
-         (array-value->alien-bytes argument)
-       (declare (ignore length))
-       (values (alien-address pointer) pointer)))))
-
-#+sbcl
-(defun linux-syscall (arguments)
-  "Call libc syscall with ARGUMENTS."
-  (let ((temporaries '()))
-    (unwind-protect
-         (let ((numbers (loop for index below 7
-                              collect (if (< index (length arguments))
-                                          (multiple-value-bind (number pointer)
-                                              (syscall-argument-integer
-                                               (nth index arguments))
-                                            (when pointer
-                                              (push pointer temporaries))
-                                            number)
-                                          0))))
-           (apply #'sb-alien:alien-funcall
-                  (sb-alien:extern-alien
-                   "syscall"
-                   (function sb-alien:long
-                             sb-alien:long
-                             sb-alien:long
-                             sb-alien:long
-                             sb-alien:long
-                             sb-alien:long
-                             sb-alien:long
-                             sb-alien:long))
-                  numbers))
-      (dolist (pointer temporaries)
-        (sb-alien:free-alien pointer)))))
-
 (defun builtin-syscall (runtime arguments)
   "Call a system syscall with ARGUMENTS."
   (if (or (null arguments)
@@ -238,19 +167,10 @@
       (progn
         (setf (runtime-errno runtime) 22)
         -1)
-      #+sbcl
-      (let ((result (linux-syscall arguments)))
-        (if (= result -1)
-            (progn
-              (setf (runtime-errno runtime) (current-errno))
-              -1)
-            (progn
-              (setf (runtime-errno runtime) 0)
-              (normalize-integer result))))
-      #-sbcl
-      (progn
-        (setf (runtime-errno runtime) 38)
-        -1)))
+      (multiple-value-bind (result errno)
+          (native-syscall arguments)
+        (setf (runtime-errno runtime) errno)
+        result)))
 
 (defun call-builtin (runtime name arguments)
   "Call builtin NAME with ARGUMENTS when it exists."

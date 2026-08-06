@@ -48,18 +48,12 @@
   (ldb (byte 8 0) (value->integer value)))
 
 (defun byte-buffer-storage-ref (storage index)
-  "Return byte INDEX from STORAGE."
-  #+sbcl
-  (sb-alien:deref storage index)
-  #-sbcl
-  (aref storage index))
+  "Return byte INDEX from native STORAGE."
+  (cffi:mem-aref storage :uint8 index))
 
 (defun (setf byte-buffer-storage-ref) (value storage index)
-  "Set byte INDEX in STORAGE to VALUE."
-  #+sbcl
-  (setf (sb-alien:deref storage index) value)
-  #-sbcl
-  (setf (aref storage index) value))
+  "Set byte INDEX in native STORAGE to VALUE."
+  (setf (cffi:mem-aref storage :uint8 index) value))
 
 (defun byte-buffer-ref (buffer index)
   "Return byte INDEX from BUFFER."
@@ -74,35 +68,24 @@
   "Return a mutable byte buffer of LENGTH bytes."
   (let* ((size    (max 0 length))
          (initial (ldb (byte 8 0) initial-element))
-         (storage #+sbcl
-                  (and (plusp size)
-                       (sb-alien:make-alien sb-alien:unsigned-char size))
-                  #-sbcl
-                  (make-array size
-                              :element-type '(unsigned-byte 8)
-                              :initial-element initial))
+         (storage (and (plusp size)
+                       (cffi:foreign-alloc :uint8
+                                           :count size
+                                           :initial-element initial)))
          (buffer  (%make-byte-buffer-value storage size)))
-    #+sbcl
-    (progn
-      (loop for index below size
-            do (setf (byte-buffer-storage-ref storage index) initial))
-      (when storage
-        (sb-ext:finalize buffer
-                         (lambda ()
-                           (sb-alien:free-alien storage))
-                         :dont-save t)))
+    (when storage
+      (trivial-garbage:finalize
+       buffer
+       (lambda ()
+         (cffi:foreign-free storage))))
     buffer))
 
 (defun byte-buffer-address (buffer)
   "Return BUFFER's native pointer address as a World Peace integer."
-  #+sbcl
-  (if (byte-buffer-value-storage buffer)
-      (normalize-integer
-       (sb-sys:sap-int
-        (sb-alien:alien-sap (byte-buffer-value-storage buffer))))
-      0)
-  #-sbcl
-  0)
+  (let ((storage (byte-buffer-value-storage buffer)))
+    (if storage
+        (normalize-integer (cffi:pointer-address storage))
+        0)))
 
 (defun byte-buffer-elements (buffer)
   "Return BUFFER bytes as a vector of World Peace integers."

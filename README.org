@@ -1,27 +1,33 @@
 #+title: World Peace
 
-World Peace is a tiny no-types language implemented on SBCL. The repository
-contains the interpreter, the image-dumping compiler, examples, and editor
-support.
+World Peace is a tiny no-types language implemented in Common Lisp. Its
+interpreter and REPL run on SBCL, CCL, and ECL on Linux x86-64; its standalone
+image-dumping compiler and Nix package remain SBCL-specific. The repository
+contains the interpreter, compiler, examples, and editor support.
 
 The language spec lives in [[file:world-peace.org][world-peace.org]].
 
 * Requirements
 
-- SBCL
+- SBCL, CCL, or ECL on Linux x86-64 for the interpreter and REPL
+- SBCL for standalone image compilation and the Nix package
+- Quicklisp with CFFI and Trivial-Garbage
 - POSIX shell for =check-lisp=
 - =curl= only if a program uses =load some.host/path/file.wp;=
 
-Quicklisp is not required. The system has no external Lisp dependencies; it
-only uses ASDF/UIOP, which are bundled with SBCL.
+The system depends on CFFI and Trivial-Garbage. Load them through Quicklisp
+before loading the local ASDF system.
 
-* Build
+* Build an SBCL Image
 
-From the repository root:
+Standalone executable images are an SBCL-only feature. From the repository
+root:
 
 #+BEGIN_SRC shell
 sbcl --non-interactive \
   --eval '(require :asdf)' \
+  --eval '(load (merge-pathnames "quicklisp/setup.lisp" (user-homedir-pathname)))' \
+  --eval '(ql:quickload (list :cffi :trivial-garbage) :silent t)' \
   --eval '(asdf:load-asd (merge-pathnames "world-peace.asd" (uiop:getcwd)))' \
   --eval '(asdf:make :world-peace)'
 #+END_SRC
@@ -91,7 +97,19 @@ to the =nix= commands above.
 
 * Run Programs
 
-Run a source file directly:
+The =peace= executable is an SBCL image. To use source mode on SBCL, CCL, or
+ECL, load the local system after Quicklisp has loaded its dependencies:
+
+#+BEGIN_SRC lisp
+(ql:quickload '(:cffi :trivial-garbage))
+(asdf:load-asd #P"/path/to/world-peace/world-peace.asd")
+(asdf:load-system :world-peace)
+(world-peace:run-source-program
+ :source-root #P"/path/to/world-peace/examples/tour/"
+ :entrypoint "01-hello.wp")
+#+END_SRC
+
+Run a source file through the SBCL image directly:
 
 #+BEGIN_SRC shell
 ./peace run examples/tour/01-hello.wp
@@ -139,6 +157,9 @@ Useful builtins:
 - =addr(buffer)= returns the native pointer as a number, for explicit pointer
   nonsense. Keep the buffer value alive while using this number.
 
+The native syscall ABI is available on Linux x86-64 under SBCL, CCL, and ECL.
+On another host, =syscall= returns =-1= and sets =errno= to =38= (=ENOSYS=).
+
 Linux/x86-64 example:
 
 #+BEGIN_SRC shell
@@ -153,7 +174,9 @@ Run the Lisp test suite:
 ./check-lisp
 #+END_SRC
 
-The tests load the local ASDF system directly and do not use Quicklisp.
+The test helper runs SBCL and loads CFFI and Trivial-Garbage through Quicklisp
+before loading the local ASDF system. The same suite is validated under CCL and
+ECL in source mode.
 
 * Editor Support
 

@@ -4,13 +4,14 @@
   :license "COLL-Attribution"
   :version "0.1.0"
   :serial t
-  :depends-on ()
+  :depends-on (#:cffi #:trivial-garbage)
   :components
   ((:module "source"
     :serial t
     :components
     ((:file "package")
      (:file "value")
+     (:file "native")
      (:file "lexer")
      (:file "parser")
      (:file "match")
